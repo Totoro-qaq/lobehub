@@ -87,6 +87,7 @@ import { acceptanceFocusedLayout, acceptanceScrollLayout } from './layout';
 import LedgerPanel, { type AcceptanceRound } from './LedgerPanel';
 import { openAcceptModal, openGroupFeedbackModal, openRejectModal } from './modals';
 import { useOriginConversation } from './originConversation';
+import { countAwaitingPrediction, summarizePredictRound } from './predictRound';
 import { acceptanceCheckPath, acceptanceOverviewPath } from './routes';
 import { getAcceptanceStatusActions } from './statusActions';
 import { canViewAcceptanceHistory, resolveAcceptanceHistoryNavigation } from './visibility';
@@ -637,34 +638,55 @@ const AcceptancePage = memo<AcceptancePageProps>(
      * opening a report never spends model budget on its own.
      *
      * The server dispatches the batch AFTER responding, so the mutation returns
-     * in milliseconds with nothing to show. Poll the bundle until the cards
-     * land, keeping the button in its loading state meanwhile — otherwise the
-     * click reads as a no-op for the ~15s the first generation takes.
+     * in milliseconds with nothing to show. Poll the bundle until every queued
+     * check records an attempt (`predictionStatus`), keeping the button in its
+     * loading state meanwhile — waiting for CARDS would never terminate on a
+     * clean delivery, because an agreeing verdict renders none.
+     *
+     * The round always ends in a toast. Zero cards is a real result with two
+     * different meanings ("reviewed, agrees" vs "couldn't judge"), and without
+     * saying which, a clean round is indistinguishable from a broken feature.
      */
     const handlePredictReviews = useCallback(async () => {
       if (!acceptanceRecordId) return;
       setPredicting(true);
       try {
         const { queued } = await verifyService.predictReviews(acceptanceRecordId);
-        if (queued === 0) return;
+        if (queued === 0) {
+          toast.success({ title: t('acceptance.predict.nonePending') });
+          return;
+        }
 
+        let checks: Parameters<typeof countAwaitingPrediction>[0] = [];
+        let awaiting = queued;
         for (let attempt = 0; attempt < PREDICT_POLL_ATTEMPTS; attempt += 1) {
           await new Promise((resolve) => setTimeout(resolve, PREDICT_POLL_INTERVAL_MS));
           const next = await mutate();
-          // Stop as soon as every queued check has been answered one way or the
-          // other — a check the model passes writes no row, so waiting for
-          // `queued` cards would always run to the timeout.
-          const settled = (next?.checks ?? []).filter(
-            (check) => check.prediction || check.result?.userDecision,
-          ).length;
-          if (settled >= queued) break;
+          checks = next?.checks ?? checks;
+          awaiting = countAwaitingPrediction(checks);
+          if (awaiting === 0) break;
         }
+
+        if (awaiting > 0) {
+          // Bounded batch overran the poll window — the rows land eventually.
+          toast.success({ title: t('acceptance.predict.stillRunning') });
+          return;
+        }
+        const { judged, outcome, proposals } = summarizePredictRound(checks);
+        toast.success({
+          title:
+            outcome === 'proposals'
+              ? t('acceptance.predict.proposals', { count: proposals })
+              : outcome === 'allClear'
+                ? t('acceptance.predict.allClear', { count: judged })
+                : t('acceptance.predict.inconclusive'),
+        });
       } catch (error) {
         setActionError(error instanceof Error ? error.message : String(error));
       } finally {
         setPredicting(false);
       }
-    }, [mutate, acceptanceRecordId]);
+    }, [mutate, acceptanceRecordId, t]);
 
     // Group-scoped feedback — for concerns that belong to no single check (the
     // checks themselves may be accepted) yet must reach the next round.
