@@ -1335,6 +1335,7 @@ export default {
   'sharePage.menu.goToLobeHub': 'Go to LobeHub',
   'sharePage.menu.more': 'More',
   'sharePage.menu.report': 'Report',
+  'sharePage.meta.agentDescription': 'An agent shared from {{appName}}.',
   'sharePage.meta.pageDescription': 'A page shared from {{appName}}.',
   'sharePage.meta.topicDescription': 'A conversation shared from {{appName}}.',
   'sharePage.pill.edit': 'Edit',
