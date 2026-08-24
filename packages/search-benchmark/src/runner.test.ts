@@ -428,10 +428,78 @@ describe('search benchmark report', () => {
         zeroResultQueries: 0,
       }),
     );
+    expect(report.quality?.datasetCoverage).toEqual({
+      nonEmptyEntities: 1,
+      nonEmptyQueries: 1,
+      sufficient: true,
+      totalEntities: 1,
+      totalQueries: 1,
+    });
     expect(markdown).toContain('## High-frequency search quality');
     expect(markdown).toContain('| search | en-US');
     expect(markdown).toContain('2/1/Y/10');
     expect(markdown).toContain('does not include HTTP, CDN, or client transport');
+  });
+
+  it('marks a sparse quality corpus as inconclusive instead of a valid migration baseline', async () => {
+    const qualityCase: SearchBenchmarkCase = {
+      actor: 'owner',
+      description: 'Synthetic empty high-frequency search',
+      entity: 'agent',
+      expectation: { maxResultCount: 5 },
+      group: 'quality',
+      id: 'quality.agent.en_browser',
+      quality: {
+        intent: 'browser',
+        literalMatchTerms: ['browser'],
+        locale: 'en-US',
+        publicQuery: 'browser',
+        topK: 5,
+      },
+      requestKey: 'quality.agent.en_browser',
+    };
+    const adapter = createAdapter([]);
+    adapter.execute = async () => ({
+      measurements: measurements().map((measurement) => ({
+        ...measurement,
+        result: 'zero_result' as const,
+        resultCount: 0,
+      })),
+      results: [],
+    });
+    const artifact = await runSearchBenchmark({
+      adapter,
+      bindings: {
+        'quality.agent.en_browser': {
+          query: 'browser',
+          request: { surface: 'typed-unified-search' },
+          resultRefs: {},
+        },
+      },
+      cases: [qualityCase],
+      hashKey: HASH_KEY,
+      measuredRuns: 3,
+      metadata: {
+        databaseSchemaVersion: '0093',
+        environment: 'snapshot-fork',
+        fixtureVersion: 'quality-v1',
+        revision: 'abcdef0',
+        snapshotAt: '2026-08-24T00:00:00.000Z',
+      },
+      warmupRuns: 0,
+    });
+    const report = createSearchBenchmarkReport(artifact);
+    const markdown = renderSearchBenchmarkReport(report);
+
+    expect(report.quality?.datasetCoverage).toEqual({
+      nonEmptyEntities: 0,
+      nonEmptyQueries: 0,
+      sufficient: false,
+      totalEntities: 1,
+      totalQueries: 1,
+    });
+    expect(markdown).toContain('Dataset coverage gate: INCONCLUSIVE');
+    expect(markdown).toContain('cannot establish recall or ranking');
   });
 });
 

@@ -85,6 +85,8 @@ The quality suite uses this fixed public corpus:
 
 It queries `agent`, `chat_group`, `topic`, `message`, `file`, `folder`, `page`, `memory`, and `knowledge_base` through the same typed unified-search semantics with `limitPerType=5`. Public query text is serialized so the report is reviewable; private result titles are not. Only HMAC result references and literal-match booleans leave process memory.
 
+The corpus still needs a representative private golden dataset for the confirmed actor scope. The report marks the dataset `INCONCLUSIVE` unless every fixed query and every entity type produces at least one candidate somewhere in the matrix. This is a dataset-validity check, not a claim that every query/entity cell must return a result. A sparse actor snapshot must not be presented as evidence about provider recall or ranking.
+
 Both runners execute cases serially to avoid cross-case load and fail closed. The contract suite performs two warmups and ten measured runs by default; the quality suite performs three measured runs with no warmup to match the Market comparison. The artifact includes:
 
 - environment, snapshot time, Git revision, Drizzle schema version, fixture version, sample counts, API error rate, and API zero-result rate;

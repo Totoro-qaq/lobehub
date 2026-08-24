@@ -68,6 +68,13 @@ export interface SearchBenchmarkReport {
     hydrationWorkP50: SearchDistributionSummary;
   };
   quality?: {
+    datasetCoverage: {
+      nonEmptyEntities: number;
+      nonEmptyQueries: number;
+      sufficient: boolean;
+      totalEntities: number;
+      totalQueries: number;
+    };
     entities: SearchBenchmarkQualityEntityReport[];
     queries: SearchBenchmarkQualityQueryReport[];
   };
@@ -146,7 +153,20 @@ const createQualityReport = (cases: QualityArtifactCase[]) => {
     };
   });
 
-  return { entities, queries };
+  const nonEmptyEntities = entities.filter(({ returnedTopK }) => returnedTopK > 0).length;
+  const nonEmptyQueries = queries.filter(({ returnedTopK }) => returnedTopK > 0).length;
+
+  return {
+    datasetCoverage: {
+      nonEmptyEntities,
+      nonEmptyQueries,
+      sufficient: nonEmptyEntities === entities.length && nonEmptyQueries === queries.length,
+      totalEntities: entities.length,
+      totalQueries: queries.length,
+    },
+    entities,
+    queries,
+  };
 };
 
 export const createSearchBenchmarkReport = (
@@ -255,6 +275,10 @@ const formatRatio = (numerator: number, denominator: number): string =>
   `${numerator}/${denominator}`;
 
 const renderQualitySection = (quality: NonNullable<SearchBenchmarkReport['quality']>): string => {
+  const { datasetCoverage } = quality;
+  const datasetGate = datasetCoverage.sufficient
+    ? `PASS — all ${datasetCoverage.totalQueries} queries and ${datasetCoverage.totalEntities} entity types produced at least one candidate.`
+    : `INCONCLUSIVE — only ${datasetCoverage.nonEmptyQueries}/${datasetCoverage.totalQueries} queries and ${datasetCoverage.nonEmptyEntities}/${datasetCoverage.totalEntities} entity types produced any candidate. This actor/snapshot cannot establish recall or ranking; curate a representative golden dataset before using it as the migration baseline.`;
   const entityTable = renderTable(
     [
       'Entity',
@@ -319,9 +343,11 @@ const renderQualitySection = (quality: NonNullable<SearchBenchmarkReport['qualit
 
   return `## High-frequency search quality
 
-This is the migration quality baseline. Each cell in the matrices is \`returned / literal Top-5 / literal Top-1 (Y/N) / product-path p50 ms\`.
+This section determines whether the run can serve as the migration quality baseline. Each cell in the matrices is \`returned / literal Top-5 / literal Top-1 (Y/N) / product-path p50 ms\`.
 
 The product-path timing covers the same final in-process search and hydration semantics used by the typed unified-search API. It does not include HTTP, CDN, or client transport; those remain a separate production telemetry comparison.
+
+**Dataset coverage gate: ${datasetGate}**
 
 ### Entity summary
 
@@ -346,7 +372,7 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
     .sort((left, right) => right.indexBytes - left.indexBytes)
     .slice(0, 5);
   const qualityWarning = report.quality
-    ? `> Quality method: fixed 20-query Chinese/English corpus × 9 user-visible database entity types × ${artifact.run.measuredRuns} measured runs. Top-1/Top-5 literal relevance checks only public query terms against the final title/identifier surface; it is a stable comparison signal, not a complete semantic judgment.`
+    ? `> Quality method: fixed ${report.quality.datasetCoverage.totalQueries}-query Chinese/English corpus × ${report.quality.datasetCoverage.totalEntities} user-visible database entity types × ${artifact.run.measuredRuns} measured runs. Top-1/Top-5 literal relevance checks only public query terms against the final title/identifier surface; it is a stable comparison signal, not a complete semantic judgment.`
     : resultCoverage.topTenComparableCases === 0
       ? '> Quality limitation: no case returns 10 results. This artifact is strong contract and permission evidence, but it cannot support the Market-style Top-10 recall, overlap, or relevance review needed for a search-quality migration decision.'
       : '> Quality note: use the Top-10-comparable cases for provider recall, overlap, and relevance review; contract and permission cases remain hard gates.';
