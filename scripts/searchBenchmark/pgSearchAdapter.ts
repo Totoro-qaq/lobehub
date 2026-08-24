@@ -93,6 +93,10 @@ interface DatabaseRowResult {
   rows?: unknown[];
 }
 
+/** Fixed page sample: stable enough for provider sizing without sorting every production-size row. */
+export const CONTENT_SAMPLE_RATE_PERCENT = 0.5;
+const CONTENT_SAMPLE_SEED = 13_431;
+
 const toBenchmarkResult = (
   type: SearchEntity,
   id: string,
@@ -195,31 +199,40 @@ const inspectTables = async (db: LobeChatDatabase) => {
   }));
 };
 
-const inspectContent = async (db: LobeChatDatabase) => {
-  const result = await db.execute(
-    sql.raw(`
+export const CONTENT_INSPECTION_QUERY = `
+    WITH message_sample AS MATERIALIZED (
+      SELECT content
+      FROM messages TABLESAMPLE SYSTEM (${CONTENT_SAMPLE_RATE_PERCENT}) REPEATABLE (${CONTENT_SAMPLE_SEED})
+    ), document_sample AS MATERIALIZED (
+      SELECT content
+      FROM documents TABLESAMPLE SYSTEM (${CONTENT_SAMPLE_RATE_PERCENT}) REPEATABLE (${CONTENT_SAMPLE_SEED})
+    )
     SELECT
       'messages' AS table_name,
       'content' AS field_name,
-      COUNT(*)::bigint AS row_count,
+      (SELECT GREATEST(reltuples, 0)::bigint FROM pg_class WHERE relname = 'messages') AS row_count,
+      COUNT(*)::bigint AS sampled_rows,
       COALESCE(percentile_cont(0.50) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p50_bytes,
       COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p95_bytes,
       COALESCE(percentile_cont(0.99) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p99_bytes,
       COALESCE(MAX(octet_length(COALESCE(content, ''))), 0)::bigint AS max_bytes
-    FROM messages
+    FROM message_sample
     UNION ALL
     SELECT
       'documents' AS table_name,
       'content' AS field_name,
-      COUNT(*)::bigint AS row_count,
+      (SELECT GREATEST(reltuples, 0)::bigint FROM pg_class WHERE relname = 'documents') AS row_count,
+      COUNT(*)::bigint AS sampled_rows,
       COALESCE(percentile_cont(0.50) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p50_bytes,
       COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p95_bytes,
       COALESCE(percentile_cont(0.99) WITHIN GROUP (ORDER BY octet_length(COALESCE(content, ''))), 0)::bigint AS p99_bytes,
       COALESCE(MAX(octet_length(COALESCE(content, ''))), 0)::bigint AS max_bytes
-    FROM documents
+    FROM document_sample
     ORDER BY table_name
-  `),
-  );
+  `;
+
+export const inspectContent = async (db: LobeChatDatabase) => {
+  const result = await db.execute(sql.raw(CONTENT_INSPECTION_QUERY));
 
   return getRows(result).map((row) => ({
     field: String(row.field_name),
@@ -228,6 +241,8 @@ const inspectContent = async (db: LobeChatDatabase) => {
     p95Bytes: toNumber(row.p95_bytes),
     p99Bytes: toNumber(row.p99_bytes),
     rowCount: toNumber(row.row_count),
+    sampleRatePercent: CONTENT_SAMPLE_RATE_PERCENT,
+    sampledRows: toNumber(row.sampled_rows),
     table: String(row.table_name),
   }));
 };

@@ -66,7 +66,7 @@ bun run search:benchmark run \
 The runner executes cases serially to avoid cross-case load, performs two warmups and ten measured runs by default, and fails closed. The artifact includes:
 
 - environment, snapshot time, Git revision, Drizzle schema version, fixture version, sample counts, API error rate, and API zero-result rate;
-- all 14 index sizes and row estimates, table sizes, and message/document content-size p50/p95/p99/max;
+- all 14 index sizes and row estimates, table sizes, and message/document content-size p50/p95/p99/max from a fixed-seed 0.5% page sample, including its sampled-row count;
 - per-case canonical result type, explicit rank, pseudonymous result reference, available score/relevance, and positive/negative assertions;
 - API result counts plus aggregate database/hydration candidate-count p50/p95/p99/max from the measured runs;
 - API, aggregate database-work, and aggregate hydration-work p50/p95/p99/max from the same instrumentation used by OTel.

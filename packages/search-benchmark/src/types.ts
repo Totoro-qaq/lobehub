@@ -55,6 +55,8 @@ export interface SearchBenchmarkContentScale {
   p95Bytes: number;
   p99Bytes: number;
   rowCount: number;
+  sampledRows: number;
+  sampleRatePercent: number;
   table: string;
 }
 
