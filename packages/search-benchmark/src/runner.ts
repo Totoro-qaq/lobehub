@@ -220,7 +220,7 @@ const runCase = async <TRequest>(
         measurement.result === 'zero_result',
     ).length;
     orderedRuns.push(
-      result.results.map(({ id, relevance, score, type }, index) => {
+      result.results.map(({ id, literalMatch, relevance, score, type }, index) => {
         if (!id)
           throw new Error(`Search benchmark returned an empty result ID: ${benchmarkCase.id}`);
         if (relevance !== undefined && !Number.isFinite(relevance)) {
@@ -231,6 +231,7 @@ const runCase = async <TRequest>(
         }
 
         return {
+          ...(literalMatch === undefined ? {} : { literalMatch }),
           rank: index + 1,
           ...(relevance === undefined ? {} : { relevance: round(relevance) }),
           resultRef: resolveResultRef(id),
@@ -260,6 +261,19 @@ const runCase = async <TRequest>(
     (orderedResultRefs) =>
       JSON.stringify(orderedResultRefs) === JSON.stringify(representativeOrder),
   );
+  const quality = benchmarkCase.quality
+    ? {
+        intent: benchmarkCase.quality.intent,
+        literalTop1: representativeOrder[0]?.literalMatch === true,
+        literalTopK: representativeOrder
+          .slice(0, benchmarkCase.quality.topK)
+          .filter(({ literalMatch }) => literalMatch).length,
+        locale: benchmarkCase.quality.locale,
+        publicQuery: benchmarkCase.quality.publicQuery,
+        returnedTopK: Math.min(representativeOrder.length, benchmarkCase.quality.topK),
+        topK: benchmarkCase.quality.topK,
+      }
+    : undefined;
 
   return {
     assertion: buildAssertion(
@@ -275,6 +289,7 @@ const runCase = async <TRequest>(
     id: benchmarkCase.id,
     inputFingerprint: pseudonymize(
       canonicalize({
+        caseContract: benchmarkCase.quality,
         query: binding.query,
         request: binding.request,
         resultRefs: binding.resultRefs,
@@ -287,6 +302,7 @@ const runCase = async <TRequest>(
       hydration: summarizeLatency(durations.hydration),
     },
     orderedResults: representativeOrder,
+    ...(quality ? { quality } : {}),
     resultCounts: {
       api: summarizeLatency(counts.api),
       database: summarizeLatency(counts.database),
@@ -362,6 +378,21 @@ const validateOptions = <TRequest>(options: SearchBenchmarkRunOptions<TRequest>)
     const binding = options.bindings[benchmarkCase.requestKey]!;
     if (!binding.query.trim()) {
       throw new Error(`Search benchmark case has an empty query: ${benchmarkCase.id}`);
+    }
+    if (benchmarkCase.quality) {
+      if (binding.query !== benchmarkCase.quality.publicQuery) {
+        throw new Error(
+          `Quality benchmark query does not match its public corpus: ${benchmarkCase.id}`,
+        );
+      }
+      if (
+        !Number.isInteger(benchmarkCase.quality.topK) ||
+        benchmarkCase.quality.topK < 1 ||
+        benchmarkCase.quality.literalMatchTerms.length === 0 ||
+        benchmarkCase.quality.literalMatchTerms.some((term) => !term.trim())
+      ) {
+        throw new Error(`Quality benchmark case has an invalid contract: ${benchmarkCase.id}`);
+      }
     }
     if (!queryMatchesShape(binding.query, benchmarkCase.queryShape)) {
       throw new Error(`Search benchmark query does not match its shape: ${benchmarkCase.id}`);

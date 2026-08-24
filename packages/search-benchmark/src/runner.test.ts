@@ -359,6 +359,80 @@ describe('search benchmark report', () => {
     expect(markdown).not.toContain('hmac:');
     expect(markdown).not.toContain('result-unknown');
   });
+
+  it('renders zero-result, literal Top-1/Top-5, and latency quality tables', async () => {
+    const qualityCase: SearchBenchmarkCase = {
+      actor: 'owner',
+      description: 'Synthetic high-frequency search quality',
+      entity: 'agent',
+      expectation: { maxResultCount: 5 },
+      group: 'quality',
+      id: 'quality.agent.en_search',
+      quality: {
+        intent: 'search',
+        literalMatchTerms: ['search'],
+        locale: 'en-US',
+        publicQuery: 'search',
+        topK: 5,
+      },
+      requestKey: 'quality.agent.en_search',
+    };
+    const adapter = createAdapter(['search-result', 'semantic-result']);
+    adapter.execute = async () => ({
+      measurements: measurements(),
+      results: [
+        { id: 'search-result', literalMatch: true, relevance: 1, type: 'agent' },
+        { id: 'semantic-result', literalMatch: false, relevance: 2, type: 'agent' },
+      ],
+    });
+    const artifact = await runSearchBenchmark({
+      adapter,
+      bindings: {
+        'quality.agent.en_search': {
+          query: 'search',
+          request: { surface: 'typed-unified-search' },
+          resultRefs: {},
+        },
+      },
+      cases: [qualityCase],
+      hashKey: HASH_KEY,
+      measuredRuns: 3,
+      metadata: {
+        databaseSchemaVersion: '0093',
+        environment: 'snapshot-fork',
+        fixtureVersion: 'quality-v1',
+        revision: 'abcdef0',
+        snapshotAt: '2026-08-24T00:00:00.000Z',
+      },
+      warmupRuns: 0,
+    });
+    const report = createSearchBenchmarkReport(artifact);
+    const markdown = renderSearchBenchmarkReport(report);
+
+    expect(artifact.cases[0]?.quality).toEqual({
+      intent: 'search',
+      literalTop1: true,
+      literalTopK: 1,
+      locale: 'en-US',
+      publicQuery: 'search',
+      returnedTopK: 2,
+      topK: 5,
+    });
+    expect(report.quality?.entities[0]).toEqual(
+      expect.objectContaining({
+        entity: 'agent',
+        literalTop1: 1,
+        literalTopK: 1,
+        queryCount: 1,
+        returnedTopK: 2,
+        zeroResultQueries: 0,
+      }),
+    );
+    expect(markdown).toContain('## High-frequency search quality');
+    expect(markdown).toContain('| search | en-US');
+    expect(markdown).toContain('2/1/Y/10');
+    expect(markdown).toContain('does not include HTTP, CDN, or client transport');
+  });
 });
 
 describe('search benchmark diff', () => {

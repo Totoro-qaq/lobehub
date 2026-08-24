@@ -34,6 +34,30 @@ export interface SearchBenchmarkEvidenceCase {
   resultCount: number;
 }
 
+export interface SearchBenchmarkQualityEntityReport {
+  apiP50MedianMs: number;
+  apiP95MedianMs: number;
+  entity: SearchBenchmarkCaseArtifact['entity'];
+  literalTop1: number;
+  literalTopK: number;
+  queryCount: number;
+  returnedTopK: number;
+  zeroResultQueries: number;
+}
+
+export interface SearchBenchmarkQualityQueryReport {
+  apiP50MedianMs: number;
+  cases: SearchBenchmarkCaseArtifact[];
+  entityCount: number;
+  literalTop1: number;
+  literalTopK: number;
+  locale: 'en-US' | 'zh-CN';
+  nonEmptyEntities: number;
+  publicQuery: string;
+  returnedTopK: number;
+  zeroResultEntities: SearchBenchmarkCaseArtifact['entity'][];
+}
+
 export interface SearchBenchmarkReport {
   artifact: SearchBenchmarkArtifact;
   groups: SearchBenchmarkGroupReport[];
@@ -42,6 +66,10 @@ export interface SearchBenchmarkReport {
     apiP95: SearchDistributionSummary;
     databaseWorkP50: SearchDistributionSummary;
     hydrationWorkP50: SearchDistributionSummary;
+  };
+  quality?: {
+    entities: SearchBenchmarkQualityEntityReport[];
+    queries: SearchBenchmarkQualityQueryReport[];
   };
   queryAndRankingEvidence: SearchBenchmarkEvidenceCase[];
   resultCoverage: SearchBenchmarkResultCoverage;
@@ -65,6 +93,62 @@ const toEvidenceCase = (
   resultCount: benchmarkCase.assertion.actualResultCount,
 });
 
+type QualityArtifactCase = SearchBenchmarkCaseArtifact & {
+  quality: NonNullable<SearchBenchmarkCaseArtifact['quality']>;
+};
+
+const isQualityCase = (
+  benchmarkCase: SearchBenchmarkCaseArtifact,
+): benchmarkCase is QualityArtifactCase => benchmarkCase.quality !== undefined;
+
+const createQualityReport = (cases: QualityArtifactCase[]) => {
+  if (cases.length === 0) return undefined;
+
+  const entities = [...new Set(cases.map(({ entity }) => entity))].map((entity) => {
+    const entityCases = cases.filter((benchmarkCase) => benchmarkCase.entity === entity);
+
+    return {
+      apiP50MedianMs: summarizeLatency(entityCases.map(({ latencyMs }) => latencyMs.api.p50)).p50,
+      apiP95MedianMs: summarizeLatency(entityCases.map(({ latencyMs }) => latencyMs.api.p95)).p50,
+      entity,
+      literalTop1: entityCases.filter(({ quality }) => quality.literalTop1).length,
+      literalTopK: entityCases.reduce((total, { quality }) => total + quality.literalTopK, 0),
+      queryCount: entityCases.length,
+      returnedTopK: entityCases.reduce((total, { quality }) => total + quality.returnedTopK, 0),
+      zeroResultQueries: entityCases.filter(({ quality }) => quality.returnedTopK === 0).length,
+    };
+  });
+  const queryKeys = [
+    ...new Set(cases.map(({ quality }) => `${quality.locale}:${quality.publicQuery}`)),
+  ];
+  const queries = queryKeys.map((queryKey) => {
+    const queryCases = cases.filter(
+      ({ quality }) => `${quality.locale}:${quality.publicQuery}` === queryKey,
+    );
+    const quality = queryCases[0]!.quality;
+
+    return {
+      apiP50MedianMs: summarizeLatency(queryCases.map(({ latencyMs }) => latencyMs.api.p50)).p50,
+      cases: queryCases,
+      entityCount: queryCases.length,
+      literalTop1: queryCases.filter(({ quality: result }) => result.literalTop1).length,
+      literalTopK: queryCases.reduce((total, { quality: result }) => total + result.literalTopK, 0),
+      locale: quality.locale,
+      nonEmptyEntities: queryCases.filter(({ quality: result }) => result.returnedTopK > 0).length,
+      publicQuery: quality.publicQuery,
+      returnedTopK: queryCases.reduce(
+        (total, { quality: result }) => total + result.returnedTopK,
+        0,
+      ),
+      zeroResultEntities: queryCases
+        .filter(({ quality: result }) => result.returnedTopK === 0)
+        .map(({ entity }) => entity),
+    };
+  });
+
+  return { entities, queries };
+};
+
 export const createSearchBenchmarkReport = (
   artifact: SearchBenchmarkArtifact,
 ): SearchBenchmarkReport => {
@@ -83,6 +167,7 @@ export const createSearchBenchmarkReport = (
       zeroResultCases: cases.filter(({ assertion }) => assertion.actualResultCount === 0).length,
     };
   });
+  const quality = createQualityReport(artifact.cases.filter(isQualityCase));
 
   return {
     artifact,
@@ -100,6 +185,7 @@ export const createSearchBenchmarkReport = (
     queryAndRankingEvidence: artifact.cases
       .filter(({ group }) => group === 'query_shape' || group === 'ranking')
       .map(toEvidenceCase),
+    ...(quality ? { quality } : {}),
     resultCoverage: {
       caseCount: artifact.cases.length,
       maxResultsPerCase: Math.max(...resultCounts, 0),
@@ -165,13 +251,103 @@ const renderTable = (
   ].join('\n');
 };
 
+const formatRatio = (numerator: number, denominator: number): string =>
+  `${numerator}/${denominator}`;
+
+const renderQualitySection = (quality: NonNullable<SearchBenchmarkReport['quality']>): string => {
+  const entityTable = renderTable(
+    [
+      'Entity',
+      'Zero queries',
+      'Top-1 literal',
+      'Top-5 literal',
+      'Returned Top-5',
+      'Median path p50',
+      'Median path p95',
+    ],
+    quality.entities.map((entity) => [
+      entity.entity,
+      formatRatio(entity.zeroResultQueries, entity.queryCount),
+      formatRatio(entity.literalTop1, entity.queryCount),
+      formatRatio(entity.literalTopK, entity.returnedTopK),
+      String(entity.returnedTopK),
+      formatMs(entity.apiP50MedianMs),
+      formatMs(entity.apiP95MedianMs),
+    ]),
+    [1, 2, 3, 4, 5, 6],
+  );
+  const queryTable = renderTable(
+    [
+      'Query',
+      'Locale',
+      'Non-empty types',
+      'Top-1 literal',
+      'Top-5 literal',
+      'Returned Top-5',
+      'Median path p50',
+      'Zero-result types',
+    ],
+    quality.queries.map((query) => [
+      query.publicQuery,
+      query.locale,
+      formatRatio(query.nonEmptyEntities, query.entityCount),
+      formatRatio(query.literalTop1, query.entityCount),
+      formatRatio(query.literalTopK, query.returnedTopK),
+      String(query.returnedTopK),
+      formatMs(query.apiP50MedianMs),
+      query.zeroResultEntities.join(', ') || 'none',
+    ]),
+    [2, 3, 4, 5, 6],
+  );
+  const entityNames = quality.entities.map(({ entity }) => entity);
+  const renderMatrix = (locale: 'en-US' | 'zh-CN') =>
+    renderTable(
+      ['Query', ...entityNames],
+      quality.queries
+        .filter((query) => query.locale === locale)
+        .map((query) => [
+          query.publicQuery,
+          ...entityNames.map((entity) => {
+            const benchmarkCase = query.cases.find((item) => item.entity === entity);
+            if (!benchmarkCase?.quality) return '—';
+
+            const top1 = benchmarkCase.quality.literalTop1 ? 'Y' : 'N';
+            return `${benchmarkCase.quality.returnedTopK}/${benchmarkCase.quality.literalTopK}/${top1}/${Math.round(benchmarkCase.latencyMs.api.p50)}`;
+          }),
+        ]),
+    );
+
+  return `## High-frequency search quality
+
+This is the migration quality baseline. Each cell in the matrices is \`returned / literal Top-5 / literal Top-1 (Y/N) / product-path p50 ms\`.
+
+The product-path timing covers the same final in-process search and hydration semantics used by the typed unified-search API. It does not include HTTP, CDN, or client transport; those remain a separate production telemetry comparison.
+
+### Entity summary
+
+${entityTable}
+
+### Query summary
+
+${queryTable}
+
+### Chinese query matrix
+
+${renderMatrix('zh-CN')}
+
+### English query matrix
+
+${renderMatrix('en-US')}`;
+};
+
 export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): string => {
   const { artifact, resultCoverage } = report;
   const largestIndexes = [...artifact.inspection.indexes]
     .sort((left, right) => right.indexBytes - left.indexBytes)
     .slice(0, 5);
-  const qualityWarning =
-    resultCoverage.topTenComparableCases === 0
+  const qualityWarning = report.quality
+    ? `> Quality method: fixed 20-query Chinese/English corpus × 9 user-visible database entity types × ${artifact.run.measuredRuns} measured runs. Top-1/Top-5 literal relevance checks only public query terms against the final title/identifier surface; it is a stable comparison signal, not a complete semantic judgment.`
+    : resultCoverage.topTenComparableCases === 0
       ? '> Quality limitation: no case returns 10 results. This artifact is strong contract and permission evidence, but it cannot support the Market-style Top-10 recall, overlap, or relevance review needed for a search-quality migration decision.'
       : '> Quality note: use the Top-10-comparable cases for provider recall, overlap, and relevance review; contract and permission cases remain hard gates.';
   const resultCoverageTable = renderTable(
@@ -191,13 +367,13 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
     ['Per-case metric', 'Median case', 'Cross-case p95', 'Worst case'],
     [
       [
-        'API p50 wall-clock',
+        'Product-path p50',
         formatMs(report.latencyAcrossCases.apiP50.p50),
         formatMs(report.latencyAcrossCases.apiP50.p95),
         formatMs(report.latencyAcrossCases.apiP50.max),
       ],
       [
-        'API p95 wall-clock',
+        'Product-path p95',
         formatMs(report.latencyAcrossCases.apiP95.p50),
         formatMs(report.latencyAcrossCases.apiP95.p95),
         formatMs(report.latencyAcrossCases.apiP95.max),
@@ -223,9 +399,9 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
       'Cases',
       'Zero results',
       'Representative results',
-      'Median case API p50',
-      'Median case API p95',
-      'Worst case API p95',
+      'Median path p50',
+      'Median path p95',
+      'Worst path p95',
     ],
     report.groups.map((group) => [
       group.group,
@@ -239,7 +415,7 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
     [1, 2, 3, 4, 5, 6],
   );
   const evidenceTable = renderTable(
-    ['Case', 'Group', 'Results', 'API p50', 'API p95', 'Stored order'],
+    ['Case', 'Group', 'Results', 'Path p50', 'Path p95', 'Stored order'],
     report.queryAndRankingEvidence.map((benchmarkCase) => [
       benchmarkCase.id,
       benchmarkCase.group,
@@ -251,7 +427,7 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
     [2, 3, 4],
   );
   const slowestCasesTable = renderTable(
-    ['Case', 'Group', 'Results', 'API p50', 'API p95'],
+    ['Case', 'Group', 'Results', 'Path p50', 'Path p95'],
     report.slowestCases.map((benchmarkCase) => [
       benchmarkCase.id,
       benchmarkCase.group,
@@ -271,6 +447,7 @@ export const renderSearchBenchmarkReport = (report: SearchBenchmarkReport): stri
     ]),
     [2, 3],
   );
+  const qualitySection = report.quality ? renderQualitySection(report.quality) : '';
 
   return `# Search benchmark baseline report
 
@@ -282,12 +459,14 @@ Generated from schema ${artifact.schemaVersion} at ${artifact.generatedAt}.
 - Environment: \`${artifact.metadata.environment}\` at ${artifact.metadata.snapshotAt}
 - Revision: \`${artifact.metadata.revision}\`
 - Run: ${artifact.cases.length} cases × ${artifact.run.measuredRuns} measured runs after ${artifact.run.warmupRuns} warmups
-- Hard gates: ${artifact.run.failedCases} failed cases, ${artifact.run.permissionLeaks} permission leaks, ${(artifact.run.errorRate * 100).toFixed(1)}% API error rate
+- Hard gates: ${artifact.run.failedCases} failed cases, ${artifact.run.permissionLeaks} permission leaks, ${(artifact.run.errorRate * 100).toFixed(1)}% search-path error rate
 - Result coverage: ${resultCoverage.totalResults} representative results; ${resultCoverage.zeroResultCases} zero-result, ${resultCoverage.singleResultCases} single-result, ${resultCoverage.multiResultCases} multi-result cases; maximum ${resultCoverage.maxResultsPerCase} results in one case
-- Typical API wall-clock: ${formatMs(report.latencyAcrossCases.apiP50.p50)} median of per-case p50; ${formatMs(report.latencyAcrossCases.apiP95.p50)} median of per-case p95
+- Typical product-path duration: ${formatMs(report.latencyAcrossCases.apiP50.p50)} median of per-case p50; ${formatMs(report.latencyAcrossCases.apiP95.p50)} median of per-case p95
 - Slowest per-case p50: \`${report.slowestCases[0]?.id ?? 'n/a'}\` at ${formatMs(report.slowestCases[0]?.apiP50Ms ?? 0)}
 
 ${qualityWarning}
+
+${qualitySection}
 
 ## Result coverage
 
@@ -311,7 +490,7 @@ Only public fixture labels are shown. Unknown database IDs remain pseudonymous.
 
 ${evidenceTable}
 
-## Slowest API paths
+## Slowest product paths
 
 ${slowestCasesTable}
 

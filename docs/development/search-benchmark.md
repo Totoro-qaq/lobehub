@@ -1,6 +1,11 @@
 # Search benchmark baseline
 
-This benchmark freezes the current `pg_search` behavior before a search-provider migration. OpenTelemetry is the shared measurement path; it is not a replacement for the deterministic result, ordering, and permission fixtures.
+This benchmark freezes the current `pg_search` behavior before a search-provider migration. It deliberately produces two independent baselines:
+
+- the contract suite freezes permissions, call sites, query shapes, and known fixture behavior;
+- the quality suite copies the Market migration method: 20 fixed Chinese/English high-frequency queries × 9 user-visible database entity types × 3 runs, with Top-5 results, zero-result counts, literal relevance, and product-path latency.
+
+OpenTelemetry is the shared measurement path; it is not a replacement for either deterministic result evidence or the high-frequency quality corpus.
 
 ## Safety boundary
 
@@ -64,7 +69,23 @@ bun run search:benchmark run \
   --output=benchmarks/search/pg-search-baseline.json
 ```
 
-The runner executes cases serially to avoid cross-case load, performs two warmups and ten measured runs by default, and fails closed. The artifact includes:
+Capture the separate Market-style quality baseline with the same confirmed snapshot and actor scope:
+
+```bash
+bun run search:benchmark run-quality \
+  --config=search-benchmark.local.json \
+  --confirmed-environment=snapshot-fork-label \
+  --output=benchmarks/search/pg-search-quality-baseline.json
+```
+
+The quality suite uses this fixed public corpus:
+
+- Chinese: `翻译`, `搜索`, `小红书`, `数据分析`, `编程`, `写作`, `图片`, `视频`, `浏览器`, `天气`
+- English: `github`, `search`, `browser`, `translation`, `data analysis`, `coding`, `image`, `automation`, `research`, `notion`
+
+It queries `agent`, `chat_group`, `topic`, `message`, `file`, `folder`, `page`, `memory`, and `knowledge_base` through the same typed unified-search semantics with `limitPerType=5`. Public query text is serialized so the report is reviewable; private result titles are not. Only HMAC result references and literal-match booleans leave process memory.
+
+Both runners execute cases serially to avoid cross-case load and fail closed. The contract suite performs two warmups and ten measured runs by default; the quality suite performs three measured runs with no warmup to match the Market comparison. The artifact includes:
 
 - environment, snapshot time, Git revision, Drizzle schema version, fixture version, sample counts, API error rate, and API zero-result rate;
 - all 14 index sizes and row estimates, table sizes, and message/document content-size p50/p95/p99/max from a fixed-seed 0.5% page sample, including its sampled-row count;
@@ -84,9 +105,19 @@ bun run search:benchmark report \
   --output=benchmarks/search/pg-search-baseline.md
 ```
 
-The report separates API wall-clock from aggregate database/hydration work, summarizes latency across cases and case groups, lists the slowest paths, and shows the stored result order for query-shape and ranking cases without exposing raw IDs.
+For the quality artifact:
 
-Contract and permission cases are hard migration gates, but they do not by themselves measure search quality. A provider quality decision also needs a Market-style corpus with multiple relevant results per query so reviewers can compare Top-10 recall, overlap, and ranking. The report calls out when the artifact is too sparse for that comparison instead of presenting a green contract run as quality evidence.
+```bash
+bun run search:benchmark report \
+  --artifact=benchmarks/search/pg-search-quality-baseline.json \
+  --output=benchmarks/search/pg-search-quality-baseline.md
+```
+
+The report separates final product-path duration from aggregate database/hydration work, summarizes latency across cases and case groups, lists the slowest paths, and shows the stored result order for query-shape and ranking cases without exposing raw IDs.
+
+Contract and permission cases are hard migration gates, but they do not by themselves measure search quality. The quality report therefore leads with two direct tables: per-entity zero-result and literal Top-1/Top-5 rates, then all 20 high-frequency queries with their zero-result entity types. Chinese and English matrices show `returned / literal Top-5 / literal Top-1 / product-path p50` for every query/entity pair.
+
+The product-path duration covers the final in-process search and hydration semantics used by the typed unified-search API. It does not include HTTP, CDN, or client transport. Production HTTP latency and cache behavior must be compared separately through OTel; do not relabel the in-process number as full network API latency.
 
 ## Compare a provider candidate
 

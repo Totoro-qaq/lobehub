@@ -7,7 +7,16 @@ import type {
 export const SEARCH_BENCHMARK_SCHEMA_VERSION = 1 as const;
 
 export type BenchmarkCaseGroup =
-  'callsite' | 'entity' | 'permission' | 'query_shape' | 'ranking' | 'result_state';
+  'callsite' | 'entity' | 'permission' | 'quality' | 'query_shape' | 'ranking' | 'result_state';
+
+export interface SearchBenchmarkQualitySpec {
+  intent: string;
+  literalMatchTerms: string[];
+  locale: 'en-US' | 'zh-CN';
+  /** Fixed public query text which is safe to serialize in quality artifacts. */
+  publicQuery: string;
+  topK: number;
+}
 
 export interface SearchBenchmarkExpectation {
   /** Stable fixture references which must never be visible to this actor. */
@@ -25,6 +34,7 @@ export interface SearchBenchmarkCase {
   expectation: SearchBenchmarkExpectation;
   group: BenchmarkCaseGroup;
   id: string;
+  quality?: SearchBenchmarkQualitySpec;
   /** Cases in one group must use identical query text. */
   queryGroup?: string;
   queryShape?:
@@ -96,6 +106,7 @@ export interface SearchBenchmarkAdapterResult {
 
 export interface SearchBenchmarkResult {
   id: string;
+  literalMatch?: boolean;
   relevance?: number;
   score?: number;
   type: SearchEntity;
@@ -142,12 +153,22 @@ export interface SearchBenchmarkCaseArtifact {
     hydration: SearchDistributionSummary;
   };
   orderedResults: Array<{
+    literalMatch?: boolean;
     rank: number;
     relevance?: number;
     resultRef: string;
     score?: number;
     type: SearchEntity;
   }>;
+  quality?: {
+    intent: string;
+    literalTop1: boolean;
+    literalTopK: number;
+    locale: SearchBenchmarkQualitySpec['locale'];
+    publicQuery: string;
+    returnedTopK: number;
+    topK: number;
+  };
   resultCounts: {
     api: SearchDistributionSummary;
     database: SearchDistributionSummary;

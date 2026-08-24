@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { SearchResult } from '../../packages/database/src/repositories/search';
 import type { LobeChatDatabase } from '../../packages/database/src/type';
 import {
   CONTENT_INSPECTION_QUERY,
   CONTENT_SAMPLE_RATE_PERCENT,
   CONTENT_SAMPLE_SEED,
+  hasLiteralResultMatch,
   inspectContent,
 } from './pgSearchAdapter';
 
@@ -43,5 +45,44 @@ describe('pg search benchmark inspection', () => {
         table: 'messages',
       },
     ]);
+  });
+});
+
+describe('pg search quality literal relevance', () => {
+  const baseResult = {
+    createdAt: new Date('2026-08-25T00:00:00.000Z'),
+    description: null,
+    id: 'agent-id',
+    relevance: 1,
+    title: 'Data Analysis Coding Assistant',
+    type: 'agent' as const,
+    updatedAt: new Date('2026-08-25T00:00:00.000Z'),
+  };
+
+  it('matches normalized Chinese text and English stems on the visible result surface', () => {
+    const result: SearchResult = {
+      ...baseResult,
+      avatar: null,
+      backgroundColor: null,
+      slug: 'github-search-tool',
+      tags: [],
+    };
+
+    expect(hasLiteralResultMatch(result, ['data', 'analy'])).toBe(true);
+    expect(hasLiteralResultMatch(result, ['github'])).toBe(true);
+    expect(hasLiteralResultMatch({ ...result, title: '小红书内容搜索' }, ['小红书'])).toBe(true);
+  });
+
+  it('does not treat descriptions as literal Top-5 relevance', () => {
+    const result: SearchResult = {
+      ...baseResult,
+      avatar: null,
+      backgroundColor: null,
+      description: 'Weather automation',
+      slug: null,
+      tags: [],
+    };
+
+    expect(hasLiteralResultMatch(result, ['weather'])).toBe(false);
   });
 });

@@ -27,6 +27,7 @@ import { HomeRepository } from '../../packages/database/src/repositories/home';
 import {
   type SearchOptions,
   SearchRepo,
+  type SearchResult,
   type SearchResultType,
 } from '../../packages/database/src/repositories/search';
 import { getServerDB } from '../../packages/database/src/server';
@@ -100,8 +101,8 @@ export const CONTENT_SAMPLE_SEED = 13_431;
 const toBenchmarkResult = (
   type: SearchEntity,
   id: string,
-  scores?: Pick<SearchBenchmarkResult, 'relevance' | 'score'>,
-): SearchBenchmarkResult => ({ id: `${type}:${id}`, ...scores, type });
+  details?: Pick<SearchBenchmarkResult, 'literalMatch' | 'relevance' | 'score'>,
+): SearchBenchmarkResult => ({ id: `${type}:${id}`, ...details, type });
 
 const toUnifiedSearchEntity = (type: SearchResultType): SearchEntity => {
   switch (type) {
@@ -127,6 +128,30 @@ const toUnifiedSearchEntity = (type: SearchResultType): SearchEntity => {
       throw new Error(`Unsupported pg_search benchmark result type: ${type}`);
     }
   }
+};
+
+const normalizeLiteralText = (value: string): string =>
+  value
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .replaceAll(/[^\p{L}\p{N}]+/gu, '');
+
+/**
+ * Match only the user-visible name/identifier surface, mirroring the stable
+ * heuristic used by the Market migration without serializing private titles.
+ */
+export const hasLiteralResultMatch = (
+  result: SearchResult,
+  literalMatchTerms: string[],
+): boolean => {
+  const identifier = 'identifier' in result ? result.identifier : undefined;
+  const name = 'name' in result ? result.name : undefined;
+  const slug = 'slug' in result ? result.slug : undefined;
+  const haystack = normalizeLiteralText(
+    [result.title, identifier, name, slug].filter((value) => typeof value === 'string').join(' '),
+  );
+
+  return literalMatchTerms.every((term) => haystack.includes(normalizeLiteralText(term)));
 };
 
 const getRows = (result: unknown): Record<string, unknown>[] => {
@@ -288,7 +313,7 @@ export const createPgSearchBenchmarkAdapter = async (): Promise<PgSearchBenchmar
   const db = await getServerDB();
 
   return {
-    execute: async ({ query, request }) => {
+    execute: async ({ benchmarkCase, query, request }) => {
       const workspaceId =
         request.workspaceId &&
         (await hasActiveWorkspaceMembership(db, {
@@ -436,7 +461,17 @@ export const createPgSearchBenchmarkAdapter = async (): Promise<PgSearchBenchmar
             });
             return results.map((result) => {
               const type = toUnifiedSearchEntity(result.type);
-              return toBenchmarkResult(type, result.id, { relevance: result.relevance });
+              return toBenchmarkResult(type, result.id, {
+                ...(benchmarkCase.quality
+                  ? {
+                      literalMatch: hasLiteralResultMatch(
+                        result,
+                        benchmarkCase.quality.literalMatchTerms,
+                      ),
+                    }
+                  : {}),
+                relevance: result.relevance,
+              });
             });
           }
         }

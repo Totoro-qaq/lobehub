@@ -14,6 +14,8 @@ import {
 import {
   SEARCH_BENCHMARK_CASES,
   SEARCH_BENCHMARK_FIXTURE_VERSION,
+  SEARCH_QUALITY_CASES,
+  SEARCH_QUALITY_FIXTURE_VERSION,
 } from '../../packages/search-benchmark/src/catalog';
 import type {
   SearchBenchmarkArtifact,
@@ -27,6 +29,8 @@ interface SearchBenchmarkConfig {
   environment: string;
   environmentKind: 'snapshot_fork';
   measuredRuns?: number;
+  qualityMeasuredRuns?: number;
+  qualityWarmupRuns?: number;
   snapshotAt: string;
   warmupRuns?: number;
 }
@@ -79,7 +83,9 @@ const currentRevision = async (): Promise<string> => {
   return getCleanRevision(fileURLToPath(new URL('../..', import.meta.url)));
 };
 
-const runBaseline = async () => {
+type BenchmarkMode = 'contract' | 'quality';
+
+const runBaseline = async (mode: BenchmarkMode) => {
   const configPath = requireArgument('config');
   const outputPath = path.resolve(requireArgument('output'));
   const confirmedEnvironment = requireArgument('confirmed-environment');
@@ -107,20 +113,23 @@ const runBaseline = async () => {
     adapter.getDatabaseSchemaVersion(),
     currentRevision(),
   ]);
+  const qualityBindings = mode === 'quality' ? createQualityBindings(config.bindings) : undefined;
   const artifact = await runSearchBenchmark({
     adapter,
-    bindings: config.bindings,
-    cases: SEARCH_BENCHMARK_CASES,
+    bindings: qualityBindings ?? config.bindings,
+    cases: mode === 'quality' ? SEARCH_QUALITY_CASES : SEARCH_BENCHMARK_CASES,
     hashKey,
-    measuredRuns: config.measuredRuns ?? 10,
+    measuredRuns:
+      mode === 'quality' ? (config.qualityMeasuredRuns ?? 3) : (config.measuredRuns ?? 10),
     metadata: {
       databaseSchemaVersion,
       environment: config.environment,
-      fixtureVersion: SEARCH_BENCHMARK_FIXTURE_VERSION,
+      fixtureVersion:
+        mode === 'quality' ? SEARCH_QUALITY_FIXTURE_VERSION : SEARCH_BENCHMARK_FIXTURE_VERSION,
       revision,
       snapshotAt: config.snapshotAt,
     },
-    warmupRuns: config.warmupRuns ?? 2,
+    warmupRuns: mode === 'quality' ? (config.qualityWarmupRuns ?? 0) : (config.warmupRuns ?? 2),
   });
 
   await writePrivateFile(outputPath, `${JSON.stringify(artifact, null, 2)}\n`);
@@ -181,6 +190,40 @@ const toSearchResultType = (entity: (typeof SEARCH_BENCHMARK_CASES)[number]['ent
       return undefined;
     }
   }
+};
+
+const createQualityBindings = (
+  bindings: SearchBenchmarkConfig['bindings'],
+): SearchBenchmarkConfig['bindings'] => {
+  const ownerBinding = bindings['entity.agent'];
+  if (!ownerBinding || ownerBinding.request.kind !== 'unified') {
+    throw new Error('Quality benchmark requires the entity.agent owner scope binding');
+  }
+
+  const { userId, workspaceId } = ownerBinding.request;
+
+  return Object.fromEntries(
+    SEARCH_QUALITY_CASES.map((benchmarkCase) => {
+      const type = toSearchResultType(benchmarkCase.entity);
+      if (!benchmarkCase.quality || !type) {
+        throw new Error(`Invalid quality benchmark case: ${benchmarkCase.id}`);
+      }
+
+      return [
+        benchmarkCase.requestKey,
+        {
+          query: benchmarkCase.quality.publicQuery,
+          request: {
+            kind: 'unified' as const,
+            options: { limitPerType: benchmarkCase.quality.topK, type },
+            userId,
+            workspaceId,
+          },
+          resultRefs: {},
+        },
+      ];
+    }),
+  );
 };
 
 const createTemplate = (): SearchBenchmarkConfig => ({
@@ -285,6 +328,8 @@ const createTemplate = (): SearchBenchmarkConfig => ({
   environment: 'replace-with-snapshot-fork-name',
   environmentKind: 'snapshot_fork',
   measuredRuns: 10,
+  qualityMeasuredRuns: 3,
+  qualityWarmupRuns: 0,
   snapshotAt: 'replace-with-ISO-8601-snapshot-time',
   warmupRuns: 2,
 });
@@ -302,7 +347,11 @@ switch (command) {
     break;
   }
   case 'run': {
-    await runBaseline();
+    await runBaseline('contract');
+    break;
+  }
+  case 'run-quality': {
+    await runBaseline('quality');
     break;
   }
   case 'report': {
@@ -314,6 +363,6 @@ switch (command) {
     break;
   }
   default: {
-    throw new Error('Usage: search:benchmark <template|run|report|diff> [arguments]');
+    throw new Error('Usage: search:benchmark <template|run|run-quality|report|diff> [arguments]');
   }
 }

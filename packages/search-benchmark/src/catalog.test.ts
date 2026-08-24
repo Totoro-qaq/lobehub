@@ -7,6 +7,9 @@ import {
   PG_SEARCH_ENTRY_POINTS,
   PG_SEARCH_INDEXES,
   SEARCH_BENCHMARK_CASES,
+  SEARCH_QUALITY_CASES,
+  SEARCH_QUALITY_ENTITIES,
+  SEARCH_QUALITY_QUERIES,
 } from './catalog';
 
 describe('pg_search inventory', () => {
@@ -107,6 +110,56 @@ describe('pg_search inventory', () => {
         'permission.revoked_access',
         'permission.deleted_object',
       ]),
+    );
+  });
+
+  it('freezes the Market-style public quality corpus across every visible database entity', () => {
+    expect(SEARCH_QUALITY_QUERIES.map(({ publicQuery }) => publicQuery)).toEqual([
+      '翻译',
+      '搜索',
+      '小红书',
+      '数据分析',
+      '编程',
+      '写作',
+      '图片',
+      '视频',
+      '浏览器',
+      '天气',
+      'github',
+      'search',
+      'browser',
+      'translation',
+      'data analysis',
+      'coding',
+      'image',
+      'automation',
+      'research',
+      'notion',
+    ]);
+    expect(SEARCH_QUALITY_ENTITIES).toEqual([
+      'agent',
+      'chat_group',
+      'topic',
+      'message',
+      'file',
+      'folder',
+      'page',
+      'memory',
+      'knowledge_base',
+    ]);
+    expect(SEARCH_QUALITY_CASES).toHaveLength(180);
+    expect(new Set(SEARCH_QUALITY_CASES.map(({ id }) => id)).size).toBe(180);
+    expect(SEARCH_QUALITY_CASES.every(({ group }) => group === 'quality')).toBe(true);
+    expect(
+      SEARCH_QUALITY_CASES.every(
+        ({ expectation, quality }) => expectation.maxResultCount === 5 && quality?.topK === 5,
+      ),
+    ).toBe(true);
+    expect(SEARCH_QUALITY_CASES.filter(({ quality }) => quality?.locale === 'zh-CN')).toHaveLength(
+      90,
+    );
+    expect(SEARCH_QUALITY_CASES.filter(({ quality }) => quality?.locale === 'en-US')).toHaveLength(
+      90,
     );
   });
 });

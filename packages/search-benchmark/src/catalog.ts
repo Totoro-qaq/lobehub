@@ -591,3 +591,184 @@ export const SEARCH_BENCHMARK_CASES: SearchBenchmarkCase[] = [
 ];
 
 export const SEARCH_BENCHMARK_FIXTURE_VERSION = 'pg-search-v1';
+
+/** The exact public corpus used by the Market migration's final API-level comparison. */
+export const SEARCH_QUALITY_QUERIES = [
+  {
+    intent: 'translation',
+    literalMatchTerms: ['翻译'],
+    locale: 'zh-CN',
+    publicQuery: '翻译',
+    slug: 'zh_translation',
+  },
+  {
+    intent: 'search',
+    literalMatchTerms: ['搜索'],
+    locale: 'zh-CN',
+    publicQuery: '搜索',
+    slug: 'zh_search',
+  },
+  {
+    intent: 'social-content',
+    literalMatchTerms: ['小红书'],
+    locale: 'zh-CN',
+    publicQuery: '小红书',
+    slug: 'zh_xiaohongshu',
+  },
+  {
+    intent: 'data-analysis',
+    literalMatchTerms: ['数据分析'],
+    locale: 'zh-CN',
+    publicQuery: '数据分析',
+    slug: 'zh_data_analysis',
+  },
+  {
+    intent: 'development',
+    literalMatchTerms: ['编程'],
+    locale: 'zh-CN',
+    publicQuery: '编程',
+    slug: 'zh_coding',
+  },
+  {
+    intent: 'writing',
+    literalMatchTerms: ['写作'],
+    locale: 'zh-CN',
+    publicQuery: '写作',
+    slug: 'zh_writing',
+  },
+  {
+    intent: 'image',
+    literalMatchTerms: ['图片'],
+    locale: 'zh-CN',
+    publicQuery: '图片',
+    slug: 'zh_image',
+  },
+  {
+    intent: 'video',
+    literalMatchTerms: ['视频'],
+    locale: 'zh-CN',
+    publicQuery: '视频',
+    slug: 'zh_video',
+  },
+  {
+    intent: 'browser',
+    literalMatchTerms: ['浏览器'],
+    locale: 'zh-CN',
+    publicQuery: '浏览器',
+    slug: 'zh_browser',
+  },
+  {
+    intent: 'utility',
+    literalMatchTerms: ['天气'],
+    locale: 'zh-CN',
+    publicQuery: '天气',
+    slug: 'zh_weather',
+  },
+  {
+    intent: 'development',
+    literalMatchTerms: ['github'],
+    locale: 'en-US',
+    publicQuery: 'github',
+    slug: 'en_github',
+  },
+  {
+    intent: 'search',
+    literalMatchTerms: ['search'],
+    locale: 'en-US',
+    publicQuery: 'search',
+    slug: 'en_search',
+  },
+  {
+    intent: 'browser',
+    literalMatchTerms: ['browser'],
+    locale: 'en-US',
+    publicQuery: 'browser',
+    slug: 'en_browser',
+  },
+  {
+    intent: 'translation',
+    literalMatchTerms: ['translat'],
+    locale: 'en-US',
+    publicQuery: 'translation',
+    slug: 'en_translation',
+  },
+  {
+    intent: 'data-analysis',
+    literalMatchTerms: ['data', 'analy'],
+    locale: 'en-US',
+    publicQuery: 'data analysis',
+    slug: 'en_data_analysis',
+  },
+  {
+    intent: 'development',
+    literalMatchTerms: ['cod'],
+    locale: 'en-US',
+    publicQuery: 'coding',
+    slug: 'en_coding',
+  },
+  {
+    intent: 'image',
+    literalMatchTerms: ['imag'],
+    locale: 'en-US',
+    publicQuery: 'image',
+    slug: 'en_image',
+  },
+  {
+    intent: 'automation',
+    literalMatchTerms: ['automat'],
+    locale: 'en-US',
+    publicQuery: 'automation',
+    slug: 'en_automation',
+  },
+  {
+    intent: 'research',
+    literalMatchTerms: ['research'],
+    locale: 'en-US',
+    publicQuery: 'research',
+    slug: 'en_research',
+  },
+  {
+    intent: 'productivity',
+    literalMatchTerms: ['notion'],
+    locale: 'en-US',
+    publicQuery: 'notion',
+    slug: 'en_notion',
+  },
+] as const;
+
+export const SEARCH_QUALITY_ENTITIES = [
+  'agent',
+  'chat_group',
+  'topic',
+  'message',
+  'file',
+  'folder',
+  'page',
+  'memory',
+  'knowledge_base',
+] as const satisfies readonly SearchEntity[];
+
+export const SEARCH_QUALITY_CASES: SearchBenchmarkCase[] = SEARCH_QUALITY_QUERIES.flatMap((query) =>
+  SEARCH_QUALITY_ENTITIES.map((entity) => {
+    const id = `quality.${entity}.${query.slug}`;
+
+    return {
+      actor: 'owner',
+      description: `${entity} Top-5 quality for the public ${query.intent} query`,
+      entity,
+      expectation: { maxResultCount: 5 },
+      group: 'quality',
+      id,
+      quality: {
+        intent: query.intent,
+        literalMatchTerms: [...query.literalMatchTerms],
+        locale: query.locale,
+        publicQuery: query.publicQuery,
+        topK: 5,
+      },
+      requestKey: id,
+    };
+  }),
+);
+
+export const SEARCH_QUALITY_FIXTURE_VERSION = 'pg-search-quality-v1';
