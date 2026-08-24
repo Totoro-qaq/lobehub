@@ -73,6 +73,7 @@ const createActivityPair = async (opts: {
 };
 
 const createContextPair = async (opts: {
+  createdAt?: Date;
   description?: string;
   memoryTags?: string[];
   tags?: string[];
@@ -96,6 +97,7 @@ const createContextPair = async (opts: {
     .insert(userMemoriesContexts)
     .values({
       associatedObjects: [{ name: 'Linear', type: UserMemoryContextObjectType.Application }],
+      createdAt: opts.createdAt,
       description: opts.description ?? 'A context description',
       tags: opts.tags,
       title: opts.title ?? 'Atlas context',
@@ -372,18 +374,21 @@ describe('user memory query layer', () => {
 
     it('deduplicates contexts before applying the lexical candidate limit', async () => {
       const { memory: linkedMemoryOne } = await createContextPair({
+        createdAt: new Date('2026-04-01T08:00:00.000Z'),
         description: 'Atlas roadmap and staffing',
         memoryTags: ['atlas'],
         tags: ['atlas'],
         title: 'Atlas staffing',
       });
       const { memory: linkedMemoryTwo } = await createContextPair({
+        createdAt: new Date('2026-04-02T08:00:00.000Z'),
         description: 'Atlas roadmap and staffing duplicate link',
         memoryTags: ['atlas'],
         tags: ['atlas'],
         title: 'Atlas staffing duplicate',
       });
       const { context: duplicatedContext } = await createContextPair({
+        createdAt: new Date('2026-04-03T08:00:00.000Z'),
         description: 'Atlas roadmap and staffing canonical context',
         memoryTags: ['atlas'],
         tags: ['atlas'],
@@ -395,6 +400,7 @@ describe('user memory query layer', () => {
         .where(eq(userMemoriesContexts.id, duplicatedContext.id));
 
       const { context: distinctContext } = await createContextPair({
+        createdAt: new Date('2026-04-04T08:00:00.000Z'),
         description: 'Atlas dependency review',
         memoryTags: ['atlas'],
         tags: ['atlas'],
