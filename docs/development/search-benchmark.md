@@ -11,6 +11,7 @@ This benchmark freezes the current `pg_search` behavior before a search-provider
 - Load environment values through the repository-approved secret mechanism. Do not source or inspect `.env*` files.
 - Use one `SEARCH_BENCHMARK_HASH_KEY` of at least 32 characters for both compared runs. It HMAC-pseudonymizes unknown result IDs and is never written to an artifact.
 - Stop if the confirmed environment label does not exactly match the configuration, any of the 14 indexes is missing, a phase has no instrumentation, results change between measured runs, or a permission negative returns its forbidden fixture.
+- Run from a clean Git worktree. The CLI rejects dirty or untracked source so the artifact revision always identifies the exact code that produced it.
 
 ## Current inventory
 
@@ -73,6 +74,20 @@ The runner executes cases serially to avoid cross-case load, performs two warmup
 
 For an untyped query, database and hydration branches execute in parallel. The artifact reports their aggregate work, while API duration remains wall-clock end to end. Use Tempo to inspect the critical path.
 
+## Summarize the baseline
+
+Generate a readable report from any public benchmark artifact:
+
+```bash
+bun run search:benchmark report \
+  --artifact=benchmarks/search/pg-search-baseline.json \
+  --output=benchmarks/search/pg-search-baseline.md
+```
+
+The report separates API wall-clock from aggregate database/hydration work, summarizes latency across cases and case groups, lists the slowest paths, and shows the stored result order for query-shape and ranking cases without exposing raw IDs.
+
+Contract and permission cases are hard migration gates, but they do not by themselves measure search quality. A provider quality decision also needs a Market-style corpus with multiple relevant results per query so reviewers can compare Top-10 recall, overlap, and ranking. The report calls out when the artifact is too sparse for that comparison instead of presenting a green contract run as quality evidence.
+
 ## Compare a provider candidate
 
 An Elasticsearch adapter must implement `SearchBenchmarkAdapter` and emit the same artifact schema and fixture version. Reuse the same runtime bindings and hash key, then create the report:
@@ -84,7 +99,7 @@ bun run search:benchmark diff \
   --output=benchmarks/search/pg-search-to-elasticsearch.md
 ```
 
-The report lists added/removed/order/detail changes, API/DB/hydration p95 deltas, and candidate-count p95 deltas per case. Missing or unexpected cases, input-fingerprint mismatches, environment/snapshot/schema mismatches, sampling-plan mismatches, any failed assertion, or any permission leak is a hard failure. Revisions may differ because the candidate provider can be implemented in a later commit.
+The report lists added/removed/order/detail changes, Top-10 overlap, a rank-by-rank Top-10 comparison, API/DB/hydration p95 deltas, and candidate-count p95 deltas per case. Missing or unexpected cases, input-fingerprint mismatches, environment/snapshot/schema mismatches, sampling-plan mismatches, any failed assertion, or any permission leak is a hard failure. Revisions may differ because the candidate provider can be implemented in a later commit.
 
 Result membership, order, or score/relevance changes are regressions by default. A reviewed difference can be approved with a JSON string array whose entries use `<case-id>:results`, `<case-id>:order`, or `<case-id>:details`, then passed as `--approved-differences=reviewed-search-differences.json`. Unused approvals fail the gate, so a stale approval cannot silently carry forward. Latency and candidate-count deltas remain report-only until the migration review confirms numerical thresholds.
 
@@ -136,6 +151,7 @@ sum by (search_provider, search_entity, search_result) (
   rate(search_operations_total{service_name="lobehub", search_phase="api", search_result=~"error|zero_result"}[5m])
 )
 /
+ignoring(search_result) group_left
 sum by (search_provider, search_entity) (
   rate(search_operations_total{service_name="lobehub", search_phase="api"}[5m])
 )

@@ -30,6 +30,15 @@ const percentile = (sorted: number[], quantile: number): number => {
 
 const round = (value: number): number => Number(value.toFixed(3));
 
+const hasQuotedPhrase = (query: string): boolean => {
+  for (const quote of ['"', "'"]) {
+    const openingQuote = query.indexOf(quote);
+    if (openingQuote >= 0 && query.indexOf(quote, openingQuote + 1) > openingQuote + 1) return true;
+  }
+
+  return false;
+};
+
 export const summarizeLatency = (values: number[]): SearchDistributionSummary => {
   const sorted = [...values].sort((left, right) => left - right);
 
@@ -328,7 +337,7 @@ const validateOptions = <TRequest>(options: SearchBenchmarkRunOptions<TRequest>)
         return query.length >= 128 || query.trim().split(/\s+/).length >= 20;
       }
       case 'quoted_phrase': {
-        return /(["']).+\1/.test(query);
+        return hasQuotedPhrase(query);
       }
       case 'special_characters': {
         return /[^\p{L}\p{N}\s]/u.test(query);

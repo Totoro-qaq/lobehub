@@ -69,6 +69,14 @@ export interface SearchBenchmarkTableScale {
 export interface SearchBenchmarkInspection {
   content: SearchBenchmarkContentScale[];
   indexes: SearchBenchmarkIndexScale[];
+  plan: {
+    contentSample: {
+      method: 'system';
+      ratePercent: number;
+      repeatableSeed: number;
+      tables: string[];
+    };
+  };
   tables: SearchBenchmarkTableScale[];
 }
 
@@ -196,6 +204,17 @@ export interface SearchBenchmarkCaseDiff {
     hydrationP95: number | null;
   };
   resultDetailsChanged: boolean;
+  topKOverlap: {
+    baselineCount: number;
+    candidateCount: number;
+    count: number;
+    k: number;
+    percent: number;
+  };
+  topKResults: {
+    baseline: string[];
+    candidate: string[];
+  };
 }
 
 export type SearchBenchmarkSemanticDifference = 'details' | 'order' | 'results';
@@ -214,6 +233,7 @@ export interface SearchBenchmarkDiff {
     candidateFailedCases: number;
     candidatePermissionLeaks: number;
     inputMismatches: string[];
+    inspectionMismatches: string[];
     metadataMismatches: string[];
     missingCases: string[];
     passed: boolean;

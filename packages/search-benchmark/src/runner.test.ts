@@ -2,6 +2,7 @@ import type { SearchMeasurement } from '@lobechat/observability-otel/modules/sea
 import { describe, expect, it } from 'vitest';
 
 import { diffSearchBenchmarks, renderSearchBenchmarkDiff } from './diff';
+import { createSearchBenchmarkReport, renderSearchBenchmarkReport } from './report';
 import { runSearchBenchmark, summarizeLatency } from './runner';
 import type { SearchBenchmarkAdapter, SearchBenchmarkArtifact, SearchBenchmarkCase } from './types';
 
@@ -61,10 +62,20 @@ const createAdapter = (resultIds: string[]): SearchBenchmarkAdapter<{ surface: s
         p95Bytes: 90,
         p99Bytes: 99,
         rowCount: 1,
+        sampledRows: 1,
+        sampleRatePercent: 100,
         table: 'messages',
       },
     ],
     indexes: [{ indexBytes: 1000, indexName: 'agents_bm25_idx', rowEstimate: 10, table: 'agents' }],
+    plan: {
+      contentSample: {
+        method: 'system',
+        ratePercent: 100,
+        repeatableSeed: 42,
+        tables: ['messages'],
+      },
+    },
     tables: [{ rowEstimate: 10, table: 'agents', tableBytes: 2000 }],
   }),
   provider: 'pg_search',
@@ -242,6 +253,54 @@ describe('search benchmark runner', () => {
     ).rejects.toThrow('query does not match its shape');
   });
 
+  it('accepts a complete quoted phrase and rejects an unterminated quote', async () => {
+    const quotedCase: SearchBenchmarkCase = {
+      ...benchmarkCase,
+      queryShape: 'quoted_phrase',
+    };
+    const options = {
+      adapter: createAdapter(['result-primary']),
+      cases: [quotedCase],
+      hashKey: HASH_KEY,
+      measuredRuns: 1,
+      metadata: {
+        databaseSchemaVersion: '0093',
+        environment: 'snapshot-fork',
+        fixtureVersion: 'fixture-v1',
+        revision: 'abcdef0',
+        snapshotAt: '2026-08-24T00:00:00.000Z',
+      },
+      warmupRuns: 0,
+    };
+
+    await expect(
+      runSearchBenchmark({
+        ...options,
+        bindings: {
+          'permission.synthetic': {
+            query: 'prefix "quoted phrase" suffix',
+            request: { surface: 'command-menu' },
+            resultRefs: { primary: 'result-primary', private: 'private-result-id' },
+          },
+        },
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({ run: expect.objectContaining({ failedCases: 0 }) }),
+    );
+    await expect(
+      runSearchBenchmark({
+        ...options,
+        bindings: {
+          'permission.synthetic': {
+            query: 'prefix "unterminated phrase',
+            request: { surface: 'command-menu' },
+            resultRefs: { primary: 'result-primary', private: 'private-result-id' },
+          },
+        },
+      }),
+    ).rejects.toThrow('query does not match its shape');
+  });
+
   it('rejects permission pairs that do not use identical query text', async () => {
     const pairedCase: SearchBenchmarkCase = {
       ...benchmarkCase,
@@ -281,6 +340,27 @@ describe('search benchmark runner', () => {
   });
 });
 
+describe('search benchmark report', () => {
+  it('separates contract coverage from Top-10 quality evidence', async () => {
+    const artifact = await run();
+    const report = createSearchBenchmarkReport(artifact);
+    const markdown = renderSearchBenchmarkReport(report);
+
+    expect(report.resultCoverage).toEqual({
+      caseCount: 1,
+      maxResultsPerCase: 2,
+      multiResultCases: 1,
+      singleResultCases: 0,
+      topTenComparableCases: 0,
+      totalResults: 2,
+      zeroResultCases: 0,
+    });
+    expect(markdown).toContain('cannot support the Market-style Top-10');
+    expect(markdown).not.toContain('hmac:');
+    expect(markdown).not.toContain('result-unknown');
+  });
+});
+
 describe('search benchmark diff', () => {
   it('reports result/order/latency changes and makes permission leakage a hard gate', async () => {
     const baseline = await run();
@@ -303,6 +383,7 @@ describe('search benchmark diff', () => {
       candidateFailedCases: 1,
       candidatePermissionLeaks: 1,
       inputMismatches: [],
+      inspectionMismatches: [],
       metadataMismatches: [],
       missingCases: [],
       passed: false,
@@ -317,11 +398,35 @@ describe('search benchmark diff', () => {
         latencyDeltaPercent: expect.objectContaining({ apiP95: 20 }),
         orderChanged: true,
         resultDetailsChanged: true,
+        topKOverlap: {
+          baselineCount: 2,
+          candidateCount: 2,
+          count: 2,
+          k: 10,
+          percent: 100,
+        },
       }),
     );
     expect(renderSearchBenchmarkDiff(diff)).toContain(
-      '| permission.synthetic | regression | changed | changed |',
+      '| permission.synthetic | regression | changed | changed | 2/2 (100.00%) |',
     );
+    expect(renderSearchBenchmarkDiff(diff)).toContain('| 1 | fixture:primary | hmac:');
+  });
+
+  it('reports partial Top-10 overlap instead of only a binary order change', async () => {
+    const baseline = await run();
+    const candidate = structuredClone(baseline) as SearchBenchmarkArtifact;
+    candidate.cases[0]!.orderedResults[1]!.resultRef = 'hmac:candidate-only';
+
+    const diff = diffSearchBenchmarks(baseline, candidate);
+
+    expect(diff.cases[0]?.topKOverlap).toEqual({
+      baselineCount: 2,
+      candidateCount: 2,
+      count: 1,
+      k: 10,
+      percent: 50,
+    });
   });
 
   it('rejects comparisons which did not execute identical inputs', async () => {
@@ -392,9 +497,12 @@ describe('search benchmark diff', () => {
     const candidate = structuredClone(baseline) as SearchBenchmarkArtifact;
     candidate.metadata.snapshotAt = '2026-08-25T00:00:00.000Z';
     candidate.run.measuredRuns = 3;
+    candidate.inspection.plan.contentSample.repeatableSeed = 99;
+    candidate.inspection.tables[0]!.rowEstimate = 11;
 
     const diff = diffSearchBenchmarks(baseline, candidate);
 
+    expect(diff.gates.inspectionMismatches).toEqual(['plan', 'tables']);
     expect(diff.gates.metadataMismatches).toEqual(['snapshotAt']);
     expect(diff.gates.runMismatches).toEqual(['measuredRuns']);
     expect(diff.gates.passed).toBe(false);

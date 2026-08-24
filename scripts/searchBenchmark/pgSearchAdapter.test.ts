@@ -4,6 +4,7 @@ import type { LobeChatDatabase } from '../../packages/database/src/type';
 import {
   CONTENT_INSPECTION_QUERY,
   CONTENT_SAMPLE_RATE_PERCENT,
+  CONTENT_SAMPLE_SEED,
   inspectContent,
 } from './pgSearchAdapter';
 
@@ -28,6 +29,7 @@ describe('pg search benchmark inspection', () => {
 
     expect(CONTENT_INSPECTION_QUERY).toContain('TABLESAMPLE SYSTEM (0.5)');
     expect(CONTENT_INSPECTION_QUERY).toContain('REPEATABLE (13431)');
+    expect(CONTENT_SAMPLE_SEED).toBe(13_431);
     expect(result).toEqual([
       {
         field: 'content',

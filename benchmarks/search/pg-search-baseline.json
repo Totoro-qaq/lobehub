@@ -3796,6 +3796,14 @@
         "table": "user_memory_persona_documents"
       }
     ],
+    "plan": {
+      "contentSample": {
+        "method": "system",
+        "ratePercent": 0.5,
+        "repeatableSeed": 13431,
+        "tables": ["documents", "messages"]
+      }
+    },
     "tables": [
       {
         "rowEstimate": 1318382,

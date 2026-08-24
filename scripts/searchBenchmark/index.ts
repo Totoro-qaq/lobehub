@@ -1,14 +1,14 @@
-import { execFile } from 'node:child_process';
 import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 
 import { LayersEnum } from '@lobechat/types';
 
 import {
+  createSearchBenchmarkReport,
   diffSearchBenchmarks,
   renderSearchBenchmarkDiff,
+  renderSearchBenchmarkReport,
   runSearchBenchmark,
 } from '../../packages/search-benchmark/src';
 import {
@@ -20,6 +20,7 @@ import type {
   SearchBenchmarkCaseBinding,
 } from '../../packages/search-benchmark/src/types';
 import type { PgSearchBenchmarkRequest } from './pgSearchAdapter';
+import { getCleanRevision } from './revision';
 
 interface SearchBenchmarkConfig {
   bindings: Record<string, SearchBenchmarkCaseBinding<PgSearchBenchmarkRequest>>;
@@ -29,8 +30,6 @@ interface SearchBenchmarkConfig {
   snapshotAt: string;
   warmupRuns?: number;
 }
-
-const execFileAsync = promisify(execFile);
 
 const getArgument = (name: string): string | undefined => {
   const prefix = `--${name}=`;
@@ -77,10 +76,7 @@ const resolveEnvironmentReferences = (value: unknown): unknown => {
 };
 
 const currentRevision = async (): Promise<string> => {
-  const { stdout } = await execFileAsync('git', ['rev-parse', 'HEAD'], {
-    cwd: fileURLToPath(new URL('../..', import.meta.url)),
-  });
-  return stdout.trim();
+  return getCleanRevision(fileURLToPath(new URL('../..', import.meta.url)));
 };
 
 const runBaseline = async () => {
@@ -147,6 +143,14 @@ const runDiff = async () => {
   await writePrivateFile(outputPath, renderSearchBenchmarkDiff(diff));
 
   if (!diff.gates.passed) throw new Error('Search benchmark comparison failed its hard gates');
+};
+
+const runReport = async () => {
+  const artifact = await readJson<SearchBenchmarkArtifact>(requireArgument('artifact'));
+  const outputPath = path.resolve(requireArgument('output'));
+  const report = createSearchBenchmarkReport(artifact);
+
+  await writePrivateFile(outputPath, renderSearchBenchmarkReport(report));
 };
 
 const toEnvironmentName = (value: string): string =>
@@ -301,11 +305,15 @@ switch (command) {
     await runBaseline();
     break;
   }
+  case 'report': {
+    await runReport();
+    break;
+  }
   case 'template': {
     await writeTemplate();
     break;
   }
   default: {
-    throw new Error('Usage: search:benchmark <template|run|diff> [arguments]');
+    throw new Error('Usage: search:benchmark <template|run|report|diff> [arguments]');
   }
 }

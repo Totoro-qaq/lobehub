@@ -95,7 +95,7 @@ interface DatabaseRowResult {
 
 /** Fixed page sample: stable enough for provider sizing without sorting every production-size row. */
 export const CONTENT_SAMPLE_RATE_PERCENT = 0.5;
-const CONTENT_SAMPLE_SEED = 13_431;
+export const CONTENT_SAMPLE_SEED = 13_431;
 
 const toBenchmarkResult = (
   type: SearchEntity,
@@ -254,7 +254,19 @@ const inspectDatabase = async (db: LobeChatDatabase): Promise<SearchBenchmarkIns
     inspectContent(db),
   ]);
 
-  return { content, indexes, tables };
+  return {
+    content,
+    indexes,
+    plan: {
+      contentSample: {
+        method: 'system',
+        ratePercent: CONTENT_SAMPLE_RATE_PERCENT,
+        repeatableSeed: CONTENT_SAMPLE_SEED,
+        tables: ['documents', 'messages'],
+      },
+    },
+    tables,
+  };
 };
 
 const readDatabaseSchemaVersion = async (db: LobeChatDatabase): Promise<string> => {

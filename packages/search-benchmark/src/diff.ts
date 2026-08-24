@@ -8,6 +8,8 @@ import type {
 } from './types';
 import { SEARCH_BENCHMARK_SCHEMA_VERSION } from './types';
 
+const TOP_K = 10;
+
 const latencyDeltaPercent = (baseline: number, candidate: number): number | null => {
   if (baseline === 0) return null;
   return Number((((candidate - baseline) / baseline) * 100).toFixed(2));
@@ -19,6 +21,13 @@ const diffCase = (
 ): SearchBenchmarkCaseDiff => {
   const baselineResultRefs = baseline.orderedResults.map(({ resultRef }) => resultRef);
   const candidateResultRefs = candidate.orderedResults.map(({ resultRef }) => resultRef);
+  const baselineTopK = baselineResultRefs.slice(0, TOP_K);
+  const candidateTopK = candidateResultRefs.slice(0, TOP_K);
+  const baselineTopKRefs = new Set(baselineTopK);
+  const topKOverlapCount = candidateTopK.filter((resultRef) =>
+    baselineTopKRefs.has(resultRef),
+  ).length;
+  const topKDenominator = Math.max(baselineTopK.length, candidateTopK.length);
   const baselineRefs = new Set(baselineResultRefs);
   const candidateRefs = new Set(candidateResultRefs);
   const withoutRank = (benchmarkCase: SearchBenchmarkCaseArtifact) =>
@@ -59,6 +68,20 @@ const diffCase = (
     },
     resultDetailsChanged:
       JSON.stringify(withoutRank(baseline)) !== JSON.stringify(withoutRank(candidate)),
+    topKOverlap: {
+      baselineCount: baselineTopK.length,
+      candidateCount: candidateTopK.length,
+      count: topKOverlapCount,
+      k: TOP_K,
+      percent:
+        topKDenominator === 0
+          ? 100
+          : Number(((topKOverlapCount / topKDenominator) * 100).toFixed(2)),
+    },
+    topKResults: {
+      baseline: baselineTopK,
+      candidate: candidateTopK,
+    },
   };
 };
 
@@ -144,6 +167,11 @@ export const diffSearchBenchmarks = (
   const unusedApprovals = [...approvedDifferences]
     .filter((approval) => !usedApprovals.has(approval))
     .sort();
+  const inspectionMismatches = ['plan', 'content', 'indexes', 'tables'].filter(
+    (key) =>
+      JSON.stringify(baseline.inspection[key as keyof typeof baseline.inspection]) !==
+      JSON.stringify(candidate.inspection[key as keyof typeof candidate.inspection]),
+  );
 
   return {
     baseline: { metadata: baseline.metadata, provider: baseline.provider },
@@ -155,6 +183,7 @@ export const diffSearchBenchmarks = (
       candidateFailedCases,
       candidatePermissionLeaks,
       inputMismatches,
+      inspectionMismatches,
       metadataMismatches,
       missingCases,
       passed:
@@ -163,6 +192,7 @@ export const diffSearchBenchmarks = (
         candidateFailedCases === 0 &&
         candidatePermissionLeaks === 0 &&
         inputMismatches.length === 0 &&
+        inspectionMismatches.length === 0 &&
         metadataMismatches.length === 0 &&
         missingCases.length === 0 &&
         runMismatches.length === 0 &&
@@ -181,6 +211,36 @@ export const diffSearchBenchmarks = (
 const formatDelta = (value: number | null): string =>
   value === null ? 'n/a' : `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
+const formatTopKOverlap = (benchmarkCase: SearchBenchmarkCaseDiff): string => {
+  const denominator = Math.max(
+    benchmarkCase.topKOverlap.baselineCount,
+    benchmarkCase.topKOverlap.candidateCount,
+  );
+
+  return `${benchmarkCase.topKOverlap.count}/${denominator} (${benchmarkCase.topKOverlap.percent.toFixed(2)}%)`;
+};
+
+const renderTopKDetails = (benchmarkCase: SearchBenchmarkCaseDiff): string => {
+  const rows = Array.from(
+    {
+      length: Math.max(
+        benchmarkCase.topKResults.baseline.length,
+        benchmarkCase.topKResults.candidate.length,
+      ),
+    },
+    (_, index) =>
+      `| ${index + 1} | ${benchmarkCase.topKResults.baseline[index] ?? '—'} | ${benchmarkCase.topKResults.candidate[index] ?? '—'} |`,
+  ).join('\n');
+
+  return `### ${benchmarkCase.id}
+
+- Top-${benchmarkCase.topKOverlap.k} overlap: ${formatTopKOverlap(benchmarkCase)}
+
+| Rank | Baseline | Candidate |
+| ---: | --- | --- |
+${rows}`;
+};
+
 export const renderSearchBenchmarkDiff = (diff: SearchBenchmarkDiff): string => {
   const rows = diff.cases
     .map((benchmarkCase) => {
@@ -190,9 +250,18 @@ export const renderSearchBenchmarkDiff = (diff: SearchBenchmarkDiff): string => 
           : benchmarkCase.approvedDifferences.length > 0
             ? 'approved'
             : 'stable';
-      return `| ${benchmarkCase.id} | ${status} | ${benchmarkCase.orderChanged ? 'changed' : 'stable'} | ${benchmarkCase.resultDetailsChanged ? 'changed' : 'stable'} | ${benchmarkCase.addedResultRefs.length} | ${benchmarkCase.removedResultRefs.length} | ${formatDelta(benchmarkCase.latencyDeltaPercent.apiP95)} | ${formatDelta(benchmarkCase.latencyDeltaPercent.databaseP95)} | ${formatDelta(benchmarkCase.latencyDeltaPercent.hydrationP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.apiP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.databaseP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.hydrationP95)} |`;
+      return `| ${benchmarkCase.id} | ${status} | ${benchmarkCase.orderChanged ? 'changed' : 'stable'} | ${benchmarkCase.resultDetailsChanged ? 'changed' : 'stable'} | ${formatTopKOverlap(benchmarkCase)} | ${benchmarkCase.addedResultRefs.length} | ${benchmarkCase.removedResultRefs.length} | ${formatDelta(benchmarkCase.latencyDeltaPercent.apiP95)} | ${formatDelta(benchmarkCase.latencyDeltaPercent.databaseP95)} | ${formatDelta(benchmarkCase.latencyDeltaPercent.hydrationP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.apiP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.databaseP95)} | ${formatDelta(benchmarkCase.resultCountDeltaPercent.hydrationP95)} |`;
     })
     .join('\n');
+  const topKDetails = diff.cases
+    .filter(
+      (benchmarkCase) =>
+        benchmarkCase.orderChanged ||
+        benchmarkCase.topKOverlap.baselineCount >= TOP_K ||
+        benchmarkCase.topKOverlap.candidateCount >= TOP_K,
+    )
+    .map(renderTopKDetails)
+    .join('\n\n');
 
   return `# Search benchmark diff
 
@@ -204,6 +273,7 @@ export const renderSearchBenchmarkDiff = (diff: SearchBenchmarkDiff): string => 
 - Failed cases: ${diff.gates.candidateFailedCases}
 - Permission leaks: ${diff.gates.candidatePermissionLeaks}
 - Input mismatches: ${diff.gates.inputMismatches.join(', ') || 'none'}
+- Inspection mismatches: ${diff.gates.inspectionMismatches.join(', ') || 'none'}
 - Metadata mismatches: ${diff.gates.metadataMismatches.join(', ') || 'none'}
 - Run mismatches: ${diff.gates.runMismatches.join(', ') || 'none'}
 - Semantic regressions: ${diff.gates.semanticRegressions.join(', ') || 'none'}
@@ -211,8 +281,12 @@ export const renderSearchBenchmarkDiff = (diff: SearchBenchmarkDiff): string => 
 - Missing cases: ${diff.gates.missingCases.join(', ') || 'none'}
 - Unexpected cases: ${diff.gates.unexpectedCases.join(', ') || 'none'}
 
-| Case | Status | Order | Details | Added | Removed | API p95 | DB p95 | Hydration p95 | API count p95 | DB candidates p95 | Hydration candidates p95 |
-| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Case | Status | Order | Details | Top-10 overlap | Added | Removed | API p95 | DB p95 | Hydration p95 | API count p95 | DB candidates p95 | Hydration candidates p95 |
+| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 ${rows}
+
+## Top-10 result comparison
+
+${topKDetails || 'No case returned ten results and no result order changed.'}
 `;
 };
