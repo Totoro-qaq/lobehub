@@ -1,0 +1,3890 @@
+{
+  "cases": [
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "query_shape",
+      "id": "query.zh_continuous",
+      "inputFingerprint": "hmac:eccd1f4eae9d399f41b2173a75cd7252a180eb6add7bdf817b957c851251df07",
+      "latencyMs": {
+        "api": {
+          "max": 425.405,
+          "p50": 345.515,
+          "p95": 411.527,
+          "p99": 422.63,
+          "samples": 10
+        },
+        "database": {
+          "max": 425.243,
+          "p50": 345.342,
+          "p95": 411.369,
+          "p99": 422.468,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.014,
+          "p50": 0.011,
+          "p95": 0.014,
+          "p99": 0.014,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "query_shape",
+      "id": "query.en_stemming",
+      "inputFingerprint": "hmac:50a337a8e6fe20a65c50269138034b638b36328e817cfa9c956716683a9ca777",
+      "latencyMs": {
+        "api": {
+          "max": 463.432,
+          "p50": 353.273,
+          "p95": 440.701,
+          "p99": 458.886,
+          "samples": 10
+        },
+        "database": {
+          "max": 463.179,
+          "p50": 353.049,
+          "p95": 440.434,
+          "p99": 458.63,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.089,
+          "p50": 0.019,
+          "p95": 0.066,
+          "p99": 0.084,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "message",
+      "group": "query_shape",
+      "id": "query.exact_phrase",
+      "inputFingerprint": "hmac:a17badc082899c03a8609fc9465575546dc69af664a352a9fcdc141161ddc475",
+      "latencyMs": {
+        "api": {
+          "max": 614.873,
+          "p50": 591.681,
+          "p95": 613.577,
+          "p99": 614.613,
+          "samples": 10
+        },
+        "database": {
+          "max": 614.562,
+          "p50": 591.333,
+          "p95": 613.223,
+          "p99": 614.294,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.12,
+          "p50": 0.021,
+          "p95": 0.085,
+          "p99": 0.113,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "message"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "file",
+      "group": "query_shape",
+      "id": "query.special_characters",
+      "inputFingerprint": "hmac:aa86ff50fcd92a56a1e27f144775a72628db9a8d4eabdb4115f7300b2feaa150",
+      "latencyMs": {
+        "api": {
+          "max": 264.798,
+          "p50": 245.21,
+          "p95": 260.081,
+          "p99": 263.855,
+          "samples": 10
+        },
+        "database": {
+          "max": 264.303,
+          "p50": 244.988,
+          "p95": 259.733,
+          "p99": 263.389,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.055,
+          "p50": 0.018,
+          "p95": 0.047,
+          "p99": 0.053,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "file"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "document",
+      "group": "query_shape",
+      "id": "query.long",
+      "inputFingerprint": "hmac:c9a47b350e591e837219d4feb54ba20ccb4127852f0c8c9c25555e8f1a190829",
+      "latencyMs": {
+        "api": {
+          "max": 1293.086,
+          "p50": 556.318,
+          "p95": 1079.358,
+          "p99": 1250.34,
+          "samples": 10
+        },
+        "database": {
+          "max": 1292.875,
+          "p50": 555.955,
+          "p95": 1079.155,
+          "p99": 1250.131,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.085,
+          "p50": 0.041,
+          "p95": 0.082,
+          "p99": 0.084,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "document"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 2,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "ranking",
+      "id": "ranking.title_weight",
+      "inputFingerprint": "hmac:5f56a39113871301711e9a6f9af7ce221f154b72e49c12459e8bee6582af8b15",
+      "latencyMs": {
+        "api": {
+          "max": 467.452,
+          "p50": 311.596,
+          "p95": 420.187,
+          "p99": 457.999,
+          "samples": 10
+        },
+        "database": {
+          "max": 466.891,
+          "p50": 311.212,
+          "p95": 419.556,
+          "p99": 457.424,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.229,
+          "p50": 0.054,
+          "p95": 0.168,
+          "p99": 0.217,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:body_match",
+          "type": "agent"
+        },
+        {
+          "rank": 2,
+          "relevance": 1.28,
+          "resultRef": "fixture:title_match",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "document",
+      "group": "ranking",
+      "id": "ranking.rare_term",
+      "inputFingerprint": "hmac:5b120fc0266f884a33e5760c0e83cd6766ce242ff019941cbfd4f293d67363ab",
+      "latencyMs": {
+        "api": {
+          "max": 697.922,
+          "p50": 295.862,
+          "p95": 584.705,
+          "p99": 675.279,
+          "samples": 10
+        },
+        "database": {
+          "max": 697.799,
+          "p50": 295.592,
+          "p95": 584.552,
+          "p99": 675.15,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.236,
+          "p50": 0.033,
+          "p95": 0.157,
+          "p99": 0.22,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "document"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "message",
+      "group": "ranking",
+      "id": "ranking.frequent_term",
+      "inputFingerprint": "hmac:258dbfa5206c4bc510c77fecb2f452a144712a34e9d2584fd72176f801afa4ac",
+      "latencyMs": {
+        "api": {
+          "max": 586.268,
+          "p50": 500.526,
+          "p95": 552.871,
+          "p99": 579.589,
+          "samples": 10
+        },
+        "database": {
+          "max": 585.834,
+          "p50": 500.079,
+          "p95": 552.437,
+          "p99": 579.154,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.074,
+          "p50": 0.047,
+          "p95": 0.068,
+          "p99": 0.073,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "message"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "all",
+      "group": "result_state",
+      "id": "result.zero",
+      "inputFingerprint": "hmac:3df4b1defd41b28b200f857d29bd9bffe175b25f743e743769e911873eaea934",
+      "latencyMs": {
+        "api": {
+          "max": 1362.736,
+          "p50": 644.092,
+          "p95": 1264.762,
+          "p99": 1343.141,
+          "samples": 10
+        },
+        "database": {
+          "max": 8170.506,
+          "p50": 4034.313,
+          "p95": 6960.317,
+          "p99": 7928.468,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.313,
+          "p50": 0.079,
+          "p95": 0.237,
+          "p99": 0.298,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "all",
+      "group": "callsite",
+      "id": "callsite.home",
+      "inputFingerprint": "hmac:f588887e72b45c232147d80ec5a3ae06e48e77d88a76ed3c04a9919ef7c30c01",
+      "latencyMs": {
+        "api": {
+          "max": 271.529,
+          "p50": 250.819,
+          "p95": 263.493,
+          "p99": 269.922,
+          "samples": 10
+        },
+        "database": {
+          "max": 271.444,
+          "p50": 250.69,
+          "p95": 263.397,
+          "p99": 269.835,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.151,
+          "p50": 0.075,
+          "p95": 0.148,
+          "p99": 0.15,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "session",
+      "group": "callsite",
+      "id": "callsite.legacy_session",
+      "inputFingerprint": "hmac:8938d915b35741cf5a4c8ff249187016f7298edd6e9eaedd2aca4c5042f67e49",
+      "latencyMs": {
+        "api": {
+          "max": 355.783,
+          "p50": 259.993,
+          "p95": 350.485,
+          "p99": 354.724,
+          "samples": 10
+        },
+        "database": {
+          "max": 355.723,
+          "p50": 259.84,
+          "p95": 350.405,
+          "p99": 354.659,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.036,
+          "p50": 0.02,
+          "p95": 0.033,
+          "p99": 0.035,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "session"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "topic",
+      "group": "callsite",
+      "id": "callsite.legacy_topic",
+      "inputFingerprint": "hmac:94767144ddb1566561071a2ff181e3c2b2a1ff71d9fd98d27bda1c56690aa317",
+      "latencyMs": {
+        "api": {
+          "max": 571.62,
+          "p50": 280.029,
+          "p95": 469.647,
+          "p99": 551.225,
+          "samples": 10
+        },
+        "database": {
+          "max": 571.512,
+          "p50": 279.911,
+          "p95": 469.554,
+          "p99": 551.121,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.048,
+          "p50": 0.006,
+          "p95": 0.03,
+          "p99": 0.044,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "topic"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "message",
+      "group": "callsite",
+      "id": "callsite.legacy_message",
+      "inputFingerprint": "hmac:8f8e89078278b01fd8aa8ee460e7c39be03014e71b7dc69677125cbcc97f76cc",
+      "latencyMs": {
+        "api": {
+          "max": 407.612,
+          "p50": 276.72,
+          "p95": 378.555,
+          "p99": 401.8,
+          "samples": 10
+        },
+        "database": {
+          "max": 407.504,
+          "p50": 276.628,
+          "p95": 378.464,
+          "p99": 401.696,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.008,
+          "p50": 0.005,
+          "p95": 0.007,
+          "p99": 0.008,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "message"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_activity",
+      "group": "callsite",
+      "id": "callsite.memory_activity_direct",
+      "inputFingerprint": "hmac:7e28769e0778367a6d45fe69299dc9be4b1511de382895bee53af053ea57284b",
+      "latencyMs": {
+        "api": {
+          "max": 842.664,
+          "p50": 346.044,
+          "p95": 672.279,
+          "p99": 808.587,
+          "samples": 10
+        },
+        "database": {
+          "max": 842.458,
+          "p50": 345.934,
+          "p95": 672.081,
+          "p99": 808.382,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.015,
+          "p50": 0.009,
+          "p95": 0.014,
+          "p99": 0.015,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_activity"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_experience",
+      "group": "callsite",
+      "id": "callsite.memory_experience_direct",
+      "inputFingerprint": "hmac:cbd40c52842efaccf767415512fdf01995d339c7b41520b9eb9e0e14d204af98",
+      "latencyMs": {
+        "api": {
+          "max": 516.686,
+          "p50": 370.412,
+          "p95": 468.721,
+          "p99": 507.093,
+          "samples": 10
+        },
+        "database": {
+          "max": 516.508,
+          "p50": 370.242,
+          "p95": 468.544,
+          "p99": 506.915,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.023,
+          "p50": 0.007,
+          "p95": 0.019,
+          "p99": 0.022,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_experience"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_identity",
+      "group": "callsite",
+      "id": "callsite.memory_identity_direct",
+      "inputFingerprint": "hmac:0aab15140cf591e70192fd01ed3601a9bd05fae755f18f0a522259d8373b30af",
+      "latencyMs": {
+        "api": {
+          "max": 395.217,
+          "p50": 259.289,
+          "p95": 375.421,
+          "p99": 391.258,
+          "samples": 10
+        },
+        "database": {
+          "max": 394.969,
+          "p50": 259.159,
+          "p95": 375.239,
+          "p99": 391.023,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.032,
+          "p50": 0.009,
+          "p95": 0.025,
+          "p99": 0.031,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_identity"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_activity",
+      "group": "callsite",
+      "id": "callsite.memory_activity_list",
+      "inputFingerprint": "hmac:f52672b9b37ae0d109022cabd306d4a9a0bbfa05a5a1996ebbeeaa83b588048d",
+      "latencyMs": {
+        "api": {
+          "max": 394.89,
+          "p50": 328.599,
+          "p95": 382.704,
+          "p99": 392.453,
+          "samples": 10
+        },
+        "database": {
+          "max": 394.646,
+          "p50": 328.265,
+          "p95": 382.469,
+          "p99": 392.211,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.018,
+          "p50": 0.012,
+          "p95": 0.018,
+          "p99": 0.018,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_activity"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_context",
+      "group": "callsite",
+      "id": "callsite.memory_context_list",
+      "inputFingerprint": "hmac:9045737341600621db3be0ce314fc62a787575266e8689ad9520a6535b193793",
+      "latencyMs": {
+        "api": {
+          "max": 2828.708,
+          "p50": 1958.067,
+          "p95": 2466.33,
+          "p99": 2756.233,
+          "samples": 10
+        },
+        "database": {
+          "max": 2828.338,
+          "p50": 1957.53,
+          "p95": 2465.848,
+          "p99": 2755.84,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.028,
+          "p50": 0.015,
+          "p95": 0.027,
+          "p99": 0.028,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_context"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_experience",
+      "group": "callsite",
+      "id": "callsite.memory_experience_list",
+      "inputFingerprint": "hmac:9fb3af7efcbe60da3116ec61e57ec5b7773646302d97fedec7f242b58c6ab370",
+      "latencyMs": {
+        "api": {
+          "max": 2595.427,
+          "p50": 354.397,
+          "p95": 1658.353,
+          "p99": 2408.012,
+          "samples": 10
+        },
+        "database": {
+          "max": 2595.314,
+          "p50": 354.285,
+          "p95": 1658.126,
+          "p99": 2407.877,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.021,
+          "p50": 0.005,
+          "p95": 0.019,
+          "p99": 0.02,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_experience"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_identity",
+      "group": "callsite",
+      "id": "callsite.memory_identity_list",
+      "inputFingerprint": "hmac:3c49e2dd2e4a0dd7378c9ba9ecaafe8610e085ca2f61d0321c60dcc475015e8f",
+      "latencyMs": {
+        "api": {
+          "max": 2139.923,
+          "p50": 670.154,
+          "p95": 2078.001,
+          "p99": 2127.538,
+          "samples": 10
+        },
+        "database": {
+          "max": 2139.68,
+          "p50": 669.684,
+          "p95": 2077.668,
+          "p99": 2127.277,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.13,
+          "p50": 0.011,
+          "p95": 0.08,
+          "p99": 0.12,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_identity"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory_preference",
+      "group": "callsite",
+      "id": "callsite.memory_preference_list",
+      "inputFingerprint": "hmac:5633d075322fbee7a0e5dd3a767b9c954444fe5d587c2a912d8586a304dd2803",
+      "latencyMs": {
+        "api": {
+          "max": 455.69,
+          "p50": 294.819,
+          "p95": 413.266,
+          "p99": 447.206,
+          "samples": 10
+        },
+        "database": {
+          "max": 455.574,
+          "p50": 294.722,
+          "p95": 413.143,
+          "p99": 447.088,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.009,
+          "p50": 0.005,
+          "p95": 0.008,
+          "p99": 0.008,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory_preference"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory",
+      "group": "callsite",
+      "id": "callsite.memory_hybrid",
+      "inputFingerprint": "hmac:a099d4849422470fbf567c082543c67c2b8519288373d7bb73b7084eac1b1271",
+      "latencyMs": {
+        "api": {
+          "max": 931.68,
+          "p50": 692.68,
+          "p95": 847.693,
+          "p99": 914.882,
+          "samples": 10
+        },
+        "database": {
+          "max": 2793.75,
+          "p50": 2535.842,
+          "p95": 2728.427,
+          "p99": 2780.685,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.125,
+          "p50": 0.034,
+          "p95": 0.101,
+          "p99": 0.12,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "resultRef": "fixture:primary",
+          "score": 0.42,
+          "type": "memory_activity"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "entity",
+      "id": "entity.agent",
+      "inputFingerprint": "hmac:71fe5487a404f8b418a56adda1f0598d1608a189d23f325fdabc001719d176ab",
+      "latencyMs": {
+        "api": {
+          "max": 644.812,
+          "p50": 311.279,
+          "p95": 539.545,
+          "p99": 623.759,
+          "samples": 10
+        },
+        "database": {
+          "max": 644.581,
+          "p50": 310.944,
+          "p95": 539.301,
+          "p99": 623.525,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.081,
+          "p50": 0.039,
+          "p95": 0.067,
+          "p99": 0.079,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "chat_group",
+      "group": "entity",
+      "id": "entity.chat_group",
+      "inputFingerprint": "hmac:39235a40749e0ae4d8dd7d40bb54f5667389b079f56697a9ff4b78469a3cdb66",
+      "latencyMs": {
+        "api": {
+          "max": 264.644,
+          "p50": 250.74,
+          "p95": 263.818,
+          "p99": 264.479,
+          "samples": 10
+        },
+        "database": {
+          "max": 264.187,
+          "p50": 250.34,
+          "p95": 263.477,
+          "p99": 264.045,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.041,
+          "p50": 0.031,
+          "p95": 0.041,
+          "p99": 0.041,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "chat_group"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "topic",
+      "group": "entity",
+      "id": "entity.topic",
+      "inputFingerprint": "hmac:84f7428eabd8f8c09f90fb2d7f2d6d0da2ee2be4d21073c2478a90ac56b57e32",
+      "latencyMs": {
+        "api": {
+          "max": 343.478,
+          "p50": 269.156,
+          "p95": 332.313,
+          "p99": 341.245,
+          "samples": 10
+        },
+        "database": {
+          "max": 343.294,
+          "p50": 268.891,
+          "p95": 332.078,
+          "p99": 341.051,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.093,
+          "p50": 0.038,
+          "p95": 0.074,
+          "p99": 0.089,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "topic"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "message",
+      "group": "entity",
+      "id": "entity.message",
+      "inputFingerprint": "hmac:5d5576d3a38d22bc5e337a460529d43f7a1b8a5db569a424ca5905414f0be713",
+      "latencyMs": {
+        "api": {
+          "max": 520.023,
+          "p50": 506.366,
+          "p95": 516.67,
+          "p99": 519.352,
+          "samples": 10
+        },
+        "database": {
+          "max": 519.638,
+          "p50": 506.162,
+          "p95": 516.362,
+          "p99": 518.983,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.092,
+          "p50": 0.038,
+          "p95": 0.081,
+          "p99": 0.09,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "message"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "file",
+      "group": "entity",
+      "id": "entity.file",
+      "inputFingerprint": "hmac:6399d64e7e965ff3efb44ea75e8a954e24ed50c3a8e18ec9600ee3e273f53d34",
+      "latencyMs": {
+        "api": {
+          "max": 245.379,
+          "p50": 239.349,
+          "p95": 244.11,
+          "p99": 245.125,
+          "samples": 10
+        },
+        "database": {
+          "max": 245.128,
+          "p50": 239.188,
+          "p95": 243.746,
+          "p99": 244.852,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.08,
+          "p50": 0.021,
+          "p95": 0.076,
+          "p99": 0.08,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "file"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "folder",
+      "group": "entity",
+      "id": "entity.folder",
+      "inputFingerprint": "hmac:afacc594b9a2ca8e59fc45449cc346e5f7f8b415245d26e38fb79fcdd2ea9feb",
+      "latencyMs": {
+        "api": {
+          "max": 600.006,
+          "p50": 377.433,
+          "p95": 576.111,
+          "p99": 595.227,
+          "samples": 10
+        },
+        "database": {
+          "max": 599.89,
+          "p50": 377.329,
+          "p95": 575.991,
+          "p99": 595.11,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.015,
+          "p50": 0.012,
+          "p95": 0.015,
+          "p99": 0.015,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "folder"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "page",
+      "group": "entity",
+      "id": "entity.page",
+      "inputFingerprint": "hmac:3f2f58167f16ffb1db3e95af052442399d265a8a45e11a46c38c0fc6f154f797",
+      "latencyMs": {
+        "api": {
+          "max": 421.455,
+          "p50": 383.352,
+          "p95": 416.294,
+          "p99": 420.423,
+          "samples": 10
+        },
+        "database": {
+          "max": 421.34,
+          "p50": 383.241,
+          "p95": 416.181,
+          "p99": 420.308,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.02,
+          "p50": 0.011,
+          "p95": 0.017,
+          "p99": 0.019,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "page"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "knowledge_base",
+      "group": "entity",
+      "id": "entity.knowledge_base",
+      "inputFingerprint": "hmac:2a86f0f5e11cccb27ed1dec7530eff525777d3da07214348324b8356337e6a61",
+      "latencyMs": {
+        "api": {
+          "max": 336.672,
+          "p50": 269.052,
+          "p95": 314.64,
+          "p99": 332.265,
+          "samples": 10
+        },
+        "database": {
+          "max": 336.506,
+          "p50": 268.921,
+          "p95": 314.499,
+          "p99": 332.104,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.016,
+          "p50": 0.012,
+          "p95": 0.016,
+          "p99": 0.016,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "knowledge_base"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "document",
+      "group": "entity",
+      "id": "entity.document_inline",
+      "inputFingerprint": "hmac:b23b6402413b765cb4109a3504f59fb4d3e53179ab90f543f282b23c6b6e7952",
+      "latencyMs": {
+        "api": {
+          "max": 305.783,
+          "p50": 297.022,
+          "p95": 303.804,
+          "p99": 305.387,
+          "samples": 10
+        },
+        "database": {
+          "max": 305.604,
+          "p50": 296.89,
+          "p95": 303.66,
+          "p99": 305.215,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.048,
+          "p50": 0.025,
+          "p95": 0.044,
+          "p99": 0.047,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "document"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "document",
+      "group": "entity",
+      "id": "entity.document_file_backed",
+      "inputFingerprint": "hmac:5d04d271419379c68afbae542e0e1f66df7387166dd531eb945306e8dce2f4f6",
+      "latencyMs": {
+        "api": {
+          "max": 321.495,
+          "p50": 296.397,
+          "p95": 312.653,
+          "p99": 319.727,
+          "samples": 10
+        },
+        "database": {
+          "max": 321.267,
+          "p50": 296.22,
+          "p95": 312.387,
+          "p99": 319.491,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.063,
+          "p50": 0.036,
+          "p95": 0.062,
+          "p99": 0.063,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:primary",
+          "type": "document"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "document",
+      "group": "entity",
+      "id": "entity.document_deduplicated",
+      "inputFingerprint": "hmac:2db40d1276e4220604c06c15426aa82aa113aaf00450ff943a439da9fc9d35df",
+      "latencyMs": {
+        "api": {
+          "max": 310.624,
+          "p50": 297.811,
+          "p95": 309.16,
+          "p99": 310.331,
+          "samples": 10
+        },
+        "database": {
+          "max": 310.526,
+          "p50": 297.713,
+          "p95": 309.011,
+          "p99": 310.223,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.024,
+          "p50": 0.019,
+          "p95": 0.023,
+          "p99": 0.023,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:deduplicated_document",
+          "type": "document"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 2,
+          "p50": 2,
+          "p95": 2,
+          "p99": 2,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "memory",
+      "group": "entity",
+      "id": "entity.memory",
+      "inputFingerprint": "hmac:d8e34258e71f4a8576aeea152fbcae2ea4bd42501bf705d87ba044a389317429",
+      "latencyMs": {
+        "api": {
+          "max": 297.85,
+          "p50": 289.311,
+          "p95": 297.806,
+          "p99": 297.842,
+          "samples": 10
+        },
+        "database": {
+          "max": 297.741,
+          "p50": 289.206,
+          "p95": 297.727,
+          "p99": 297.738,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.043,
+          "p50": 0.015,
+          "p95": 0.036,
+          "p99": 0.041,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "fixture:primary",
+          "type": "memory"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "message",
+      "group": "permission",
+      "id": "permission.tool_message_excluded",
+      "inputFingerprint": "hmac:902d1996455f857578110d66a2ceab37d146864ea9a5b9952ffc604e951b4138",
+      "latencyMs": {
+        "api": {
+          "max": 483.636,
+          "p50": 376.662,
+          "p95": 442.221,
+          "p99": 475.353,
+          "samples": 10
+        },
+        "database": {
+          "max": 483.238,
+          "p50": 376.352,
+          "p95": 441.78,
+          "p99": 474.946,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.016,
+          "p50": 0.008,
+          "p95": 0.015,
+          "p99": 0.016,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "knowledge_base",
+      "group": "permission",
+      "id": "permission.workspace_allowed",
+      "inputFingerprint": "hmac:c45459e7a26bc5971e56bd4b702c6c3a25e003fc68be21468dbd9ef69d2cc4b1",
+      "latencyMs": {
+        "api": {
+          "max": 255.958,
+          "p50": 251.712,
+          "p95": 254.584,
+          "p99": 255.684,
+          "samples": 10
+        },
+        "database": {
+          "max": 255.582,
+          "p50": 251.507,
+          "p95": 254.16,
+          "p99": 255.297,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.055,
+          "p50": 0.042,
+          "p95": 0.051,
+          "p99": 0.054,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:shared_knowledge_base",
+          "type": "knowledge_base"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "permission",
+      "id": "permission.public_agent",
+      "inputFingerprint": "hmac:d3d09be03a9de3a298009f30ac4a2e3e0485bc05108edb428118d090b6458227",
+      "latencyMs": {
+        "api": {
+          "max": 454.688,
+          "p50": 273.922,
+          "p95": 401.288,
+          "p99": 444.008,
+          "samples": 10
+        },
+        "database": {
+          "max": 454.224,
+          "p50": 273.492,
+          "p95": 400.846,
+          "p99": 443.548,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.068,
+          "p50": 0.049,
+          "p95": 0.066,
+          "p99": 0.067,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:public_agent",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "agent",
+      "group": "permission",
+      "id": "permission.private_agent",
+      "inputFingerprint": "hmac:377aa038e87302401c34279ca5d1b83a6611fd198d17059f71c4275e09e30bdf",
+      "latencyMs": {
+        "api": {
+          "max": 943.655,
+          "p50": 275.747,
+          "p95": 804.3,
+          "p99": 915.784,
+          "samples": 10
+        },
+        "database": {
+          "max": 942.995,
+          "p50": 275.342,
+          "p95": 803.716,
+          "p99": 915.139,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.058,
+          "p50": 0.043,
+          "p95": 0.057,
+          "p99": 0.058,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "hmac:6aed490c4f4fb0e92d64bbeb9951a7e95f76e631bbdf021474048ab5556e5432",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "topic",
+      "group": "permission",
+      "id": "permission.private_agent_topic",
+      "inputFingerprint": "hmac:779881c450a5d15c96144937e6bb463ac6074c688c53859b234e1516432c8078",
+      "latencyMs": {
+        "api": {
+          "max": 368.466,
+          "p50": 257.807,
+          "p95": 357.46,
+          "p99": 366.265,
+          "samples": 10
+        },
+        "database": {
+          "max": 368.057,
+          "p50": 257.468,
+          "p95": 357.087,
+          "p99": 365.863,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.042,
+          "p50": 0.017,
+          "p95": 0.034,
+          "p99": 0.04,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "message",
+      "group": "permission",
+      "id": "permission.private_agent_message",
+      "inputFingerprint": "hmac:a30ac60c2df8c180e7eec211b1ba7c759cfdff6333442a2e94981d106a27bfc5",
+      "latencyMs": {
+        "api": {
+          "max": 459.893,
+          "p50": 274.821,
+          "p95": 435.132,
+          "p99": 454.941,
+          "samples": 10
+        },
+        "database": {
+          "max": 459.576,
+          "p50": 274.425,
+          "p95": 434.886,
+          "p99": 454.638,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.018,
+          "p50": 0.011,
+          "p95": 0.016,
+          "p99": 0.018,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "topic",
+      "group": "permission",
+      "id": "permission.legacy_private_agent_topic",
+      "inputFingerprint": "hmac:52f745efb43ab67a244303cc56eebd9fc505927bd7ef366e89c022080cdd82b8",
+      "latencyMs": {
+        "api": {
+          "max": 398.996,
+          "p50": 278.845,
+          "p95": 369.342,
+          "p99": 393.065,
+          "samples": 10
+        },
+        "database": {
+          "max": 398.792,
+          "p50": 278.709,
+          "p95": 369.145,
+          "p99": 392.863,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.01,
+          "p50": 0.007,
+          "p95": 0.009,
+          "p99": 0.01,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "message",
+      "group": "permission",
+      "id": "permission.legacy_private_agent_message",
+      "inputFingerprint": "hmac:5df54a77b0d63bbf063b9fefc35fe8645077e4c38f79cc9d136ee5d624c7f355",
+      "latencyMs": {
+        "api": {
+          "max": 691.654,
+          "p50": 358.094,
+          "p95": 633.725,
+          "p99": 680.068,
+          "samples": 10
+        },
+        "database": {
+          "max": 691.581,
+          "p50": 357.992,
+          "p95": 633.637,
+          "p99": 679.992,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.011,
+          "p50": 0.008,
+          "p95": 0.011,
+          "p99": 0.011,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "knowledge_base",
+      "group": "permission",
+      "id": "permission.public_knowledge_base",
+      "inputFingerprint": "hmac:7d7f7856ccb3ca689942126355e4903b46f96b11cad14f7e1c36181936610cab",
+      "latencyMs": {
+        "api": {
+          "max": 323.137,
+          "p50": 257.635,
+          "p95": 322.581,
+          "p99": 323.026,
+          "samples": 10
+        },
+        "database": {
+          "max": 322.812,
+          "p50": 257.24,
+          "p95": 322.162,
+          "p99": 322.682,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.057,
+          "p50": 0.033,
+          "p95": 0.047,
+          "p99": 0.055,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:public_knowledge_base",
+          "type": "knowledge_base"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "knowledge_base",
+      "group": "permission",
+      "id": "permission.private_knowledge_base",
+      "inputFingerprint": "hmac:07d76ea865a27be7c1625aa853e56a9d5592da05f73f4a17ad2e92a63bbb232b",
+      "latencyMs": {
+        "api": {
+          "max": 402.68,
+          "p50": 254.404,
+          "p95": 368.258,
+          "p99": 395.795,
+          "samples": 10
+        },
+        "database": {
+          "max": 402.27,
+          "p50": 254.079,
+          "p95": 367.854,
+          "p99": 395.387,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.099,
+          "p50": 0.038,
+          "p95": 0.086,
+          "p99": 0.096,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "hmac:52528f4b21159e76af9f7900540d2197992ec16dada3fd11842ff354f95370b9",
+          "type": "knowledge_base"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "topic",
+      "group": "permission",
+      "id": "permission.agent_scope_allowed",
+      "inputFingerprint": "hmac:232394b4847c02653cf5d59a600d389b3616be874fe90278f4338d5d7defabc7",
+      "latencyMs": {
+        "api": {
+          "max": 409.251,
+          "p50": 284.414,
+          "p95": 406.649,
+          "p99": 408.731,
+          "samples": 10
+        },
+        "database": {
+          "max": 408.789,
+          "p50": 284.035,
+          "p95": 406.188,
+          "p99": 408.269,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.062,
+          "p50": 0.051,
+          "p95": 0.06,
+          "p99": 0.061,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "fixture:agent_topic",
+          "type": "topic"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "topic",
+      "group": "permission",
+      "id": "permission.agent_scope_denied",
+      "inputFingerprint": "hmac:47883b802dbbd521162479b634e3d1453a863da0deeb3122491893ecaf098eb8",
+      "latencyMs": {
+        "api": {
+          "max": 373.791,
+          "p50": 263.167,
+          "p95": 358.552,
+          "p99": 370.743,
+          "samples": 10
+        },
+        "database": {
+          "max": 373.443,
+          "p50": 262.874,
+          "p95": 358.145,
+          "p99": 370.383,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.108,
+          "p50": 0.049,
+          "p95": 0.093,
+          "p99": 0.105,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 3,
+          "resultRef": "hmac:6da7b2e0bbb2d3caca87e9a84cd0c214cad83c7493297e41a92ca47934cb3436",
+          "type": "topic"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "knowledge_base",
+      "group": "permission",
+      "id": "permission.workspace_denied",
+      "inputFingerprint": "hmac:76d5e39206d311887ac779b6e3821a77376e034fb7ef996e7708cbf85818f230",
+      "latencyMs": {
+        "api": {
+          "max": 532.371,
+          "p50": 260.388,
+          "p95": 481.996,
+          "p99": 522.296,
+          "samples": 10
+        },
+        "database": {
+          "max": 532.249,
+          "p50": 260.053,
+          "p95": 481.741,
+          "p99": 522.147,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.008,
+          "p50": 0.003,
+          "p95": 0.007,
+          "p99": 0.007,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "file",
+      "group": "permission",
+      "id": "permission.restricted_file",
+      "inputFingerprint": "hmac:2154785043d24ad0a3eef099b18afdad6cce28732944fcdd44f44162a9ea492e",
+      "latencyMs": {
+        "api": {
+          "max": 485.23,
+          "p50": 254.369,
+          "p95": 477.593,
+          "p99": 483.703,
+          "samples": 10
+        },
+        "database": {
+          "max": 484.89,
+          "p50": 253.968,
+          "p95": 477.21,
+          "p99": 483.354,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.01,
+          "p50": 0.005,
+          "p95": 0.01,
+          "p99": 0.01,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "folder",
+      "group": "permission",
+      "id": "permission.restricted_folder",
+      "inputFingerprint": "hmac:bcae6b17e76c851ade361aff51168481ce0463e24ff5337bd4309d414e0c6c8f",
+      "latencyMs": {
+        "api": {
+          "max": 437.785,
+          "p50": 337.81,
+          "p95": 432.59,
+          "p99": 436.746,
+          "samples": 10
+        },
+        "database": {
+          "max": 437.442,
+          "p50": 337.507,
+          "p95": 432.185,
+          "p99": 436.391,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.039,
+          "p50": 0.013,
+          "p95": 0.034,
+          "p99": 0.038,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "page",
+      "group": "permission",
+      "id": "permission.restricted_page",
+      "inputFingerprint": "hmac:712e2ef3155e1f6c2fb3ebaa9ae606a4b3d8174f823f1000a4b0980f55f1b5f1",
+      "latencyMs": {
+        "api": {
+          "max": 536.32,
+          "p50": 270.398,
+          "p95": 464.787,
+          "p99": 522.013,
+          "samples": 10
+        },
+        "database": {
+          "max": 535.919,
+          "p50": 270.111,
+          "p95": 464.446,
+          "p99": 521.624,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.039,
+          "p50": 0.013,
+          "p95": 0.037,
+          "p99": 0.038,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "all",
+      "group": "permission",
+      "id": "permission.personal_isolation",
+      "inputFingerprint": "hmac:3632e0f6c3d47c88417656d4c99167f08e6ac2620efd3af4bdfcb991697edd5b",
+      "latencyMs": {
+        "api": {
+          "max": 1432.628,
+          "p50": 600.26,
+          "p95": 1074.555,
+          "p99": 1361.014,
+          "samples": 10
+        },
+        "database": {
+          "max": 10960.978,
+          "p50": 3873.677,
+          "p95": 7815.304,
+          "p99": 10331.843,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.156,
+          "p50": 0.065,
+          "p95": 0.129,
+          "p99": 0.15,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "all",
+      "group": "permission",
+      "id": "permission.revoked_access",
+      "inputFingerprint": "hmac:d81c43c841b38d7910f3820cc2dd39d65e5c7e71283f93f07d34da4225fa5ed2",
+      "latencyMs": {
+        "api": {
+          "max": 700.722,
+          "p50": 615.619,
+          "p95": 700.236,
+          "p99": 700.625,
+          "samples": 10
+        },
+        "database": {
+          "max": 4362.81,
+          "p50": 3971.695,
+          "p95": 4281.793,
+          "p99": 4346.607,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.068,
+          "p50": 0.031,
+          "p95": 0.066,
+          "p99": 0.068,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 0,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 10
+      },
+      "entity": "all",
+      "group": "permission",
+      "id": "permission.deleted_object",
+      "inputFingerprint": "hmac:2337da8a48b2c799c6851b9fced2e0945e3c23dea33fc6f4346c0ce0eb0d4811",
+      "latencyMs": {
+        "api": {
+          "max": 666.409,
+          "p50": 531.138,
+          "p95": 627.508,
+          "p99": 658.629,
+          "samples": 10
+        },
+        "database": {
+          "max": 3712.51,
+          "p50": 3429.128,
+          "p95": 3655.279,
+          "p99": 3701.064,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.059,
+          "p50": 0.038,
+          "p95": 0.054,
+          "p99": 0.058,
+          "samples": 10
+        }
+      },
+      "orderedResults": [],
+      "resultCounts": {
+        "api": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "database": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0,
+          "samples": 10
+        }
+      }
+    },
+    {
+      "assertion": {
+        "actualResultCount": 1,
+        "excludedPresent": [],
+        "includedMissing": [],
+        "measurementErrors": 0,
+        "passed": true,
+        "permissionLeak": false,
+        "stable": true,
+        "zeroResultMeasurements": 0
+      },
+      "entity": "all",
+      "group": "permission",
+      "id": "permission.nonexistent_scope",
+      "inputFingerprint": "hmac:02fdbd2308c05cef933d98baf8a4b12f87390cb982e14de8064e464839bca395",
+      "latencyMs": {
+        "api": {
+          "max": 1019.039,
+          "p50": 513.582,
+          "p95": 826.803,
+          "p99": 980.592,
+          "samples": 10
+        },
+        "database": {
+          "max": 8262.068,
+          "p50": 3452.734,
+          "p95": 6168.549,
+          "p99": 7843.365,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 0.132,
+          "p50": 0.093,
+          "p95": 0.128,
+          "p99": 0.131,
+          "samples": 10
+        }
+      },
+      "orderedResults": [
+        {
+          "rank": 1,
+          "relevance": 1,
+          "resultRef": "hmac:370e97b714d27773d18a948bf239e2e35e778c3d221890a32735330f87bcb866",
+          "type": "agent"
+        }
+      ],
+      "resultCounts": {
+        "api": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "database": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        },
+        "hydration": {
+          "max": 1,
+          "p50": 1,
+          "p95": 1,
+          "p99": 1,
+          "samples": 10
+        }
+      }
+    }
+  ],
+  "generatedAt": "2026-08-24T14:45:30.696Z",
+  "inspection": {
+    "content": [
+      {
+        "field": "content",
+        "maxBytes": 81047905,
+        "p50Bytes": 8926,
+        "p95Bytes": 108785,
+        "p99Bytes": 407918,
+        "rowCount": 1537135,
+        "sampleRatePercent": 0.5,
+        "sampledRows": 7616,
+        "table": "documents"
+      },
+      {
+        "field": "content",
+        "maxBytes": 3770474,
+        "p50Bytes": 197,
+        "p95Bytes": 11285,
+        "p99Bytes": 30742,
+        "rowCount": 25090372,
+        "sampleRatePercent": 0.5,
+        "sampledRows": 125583,
+        "table": "messages"
+      }
+    ],
+    "indexes": [
+      {
+        "indexBytes": 1559879680,
+        "indexName": "agents_bm25_idx",
+        "rowEstimate": 1318382,
+        "table": "agents"
+      },
+      {
+        "indexBytes": 18948096,
+        "indexName": "chat_groups_bm25_idx",
+        "rowEstimate": 4704,
+        "table": "chat_groups"
+      },
+      {
+        "indexBytes": 21035638784,
+        "indexName": "documents_bm25_idx",
+        "rowEstimate": 1537135,
+        "table": "documents"
+      },
+      {
+        "indexBytes": 133496832,
+        "indexName": "files_bm25_idx",
+        "rowEstimate": 963738,
+        "table": "files"
+      },
+      {
+        "indexBytes": 26279936,
+        "indexName": "knowledge_bases_bm25_idx",
+        "rowEstimate": 10913,
+        "table": "knowledge_bases"
+      },
+      {
+        "indexBytes": 32582057984,
+        "indexName": "messages_bm25_idx",
+        "rowEstimate": 25090372,
+        "table": "messages"
+      },
+      {
+        "indexBytes": 309772288,
+        "indexName": "topics_bm25_idx",
+        "rowEstimate": 1259782,
+        "table": "topics"
+      },
+      {
+        "indexBytes": 60743680,
+        "indexName": "user_memories_activities_bm25_idx",
+        "rowEstimate": 203456,
+        "table": "user_memories_activities"
+      },
+      {
+        "indexBytes": 270680064,
+        "indexName": "user_memories_bm25_idx",
+        "rowEstimate": 621010,
+        "table": "user_memories"
+      },
+      {
+        "indexBytes": 56655872,
+        "indexName": "user_memories_contexts_bm25_idx",
+        "rowEstimate": 193389,
+        "table": "user_memories_contexts"
+      },
+      {
+        "indexBytes": 78782464,
+        "indexName": "user_memories_experiences_bm25_idx",
+        "rowEstimate": 105756,
+        "table": "user_memories_experiences"
+      },
+      {
+        "indexBytes": 13139968,
+        "indexName": "user_memories_identities_bm25_idx",
+        "rowEstimate": 5477,
+        "table": "user_memories_identities"
+      },
+      {
+        "indexBytes": 42475520,
+        "indexName": "user_memories_preferences_bm25_idx",
+        "rowEstimate": 121103,
+        "table": "user_memories_preferences"
+      },
+      {
+        "indexBytes": 134569984,
+        "indexName": "user_memory_persona_documents_bm25_idx",
+        "rowEstimate": 8451,
+        "table": "user_memory_persona_documents"
+      }
+    ],
+    "tables": [
+      {
+        "rowEstimate": 1318382,
+        "table": "agents",
+        "tableBytes": 6068928512
+      },
+      {
+        "rowEstimate": 4704,
+        "table": "chat_groups",
+        "tableBytes": 44212224
+      },
+      {
+        "rowEstimate": 1537135,
+        "table": "documents",
+        "tableBytes": 83030409216
+      },
+      {
+        "rowEstimate": 963738,
+        "table": "files",
+        "tableBytes": 960536576
+      },
+      {
+        "rowEstimate": 10913,
+        "table": "knowledge_bases",
+        "tableBytes": 31940608
+      },
+      {
+        "rowEstimate": 25090372,
+        "table": "messages",
+        "tableBytes": 118656778240
+      },
+      {
+        "rowEstimate": 1259782,
+        "table": "topics",
+        "tableBytes": 3736666112
+      },
+      {
+        "rowEstimate": 621010,
+        "table": "user_memories",
+        "tableBytes": 5947744256
+      },
+      {
+        "rowEstimate": 203456,
+        "table": "user_memories_activities",
+        "tableBytes": 1531576320
+      },
+      {
+        "rowEstimate": 193389,
+        "table": "user_memories_contexts",
+        "tableBytes": 1404510208
+      },
+      {
+        "rowEstimate": 105756,
+        "table": "user_memories_experiences",
+        "tableBytes": 1553129472
+      },
+      {
+        "rowEstimate": 5477,
+        "table": "user_memories_identities",
+        "tableBytes": 104054784
+      },
+      {
+        "rowEstimate": 121103,
+        "table": "user_memories_preferences",
+        "tableBytes": 829693952
+      },
+      {
+        "rowEstimate": 8451,
+        "table": "user_memory_persona_documents",
+        "tableBytes": 482443264
+      }
+    ]
+  },
+  "metadata": {
+    "databaseSchemaVersion": "1787542746291:a2fe520f2c9aa08da253491f0dc768673012b8d0b0c7bcd58a885a67b16993be",
+    "environment": "tj-dev-latest",
+    "fixtureVersion": "pg-search-v1",
+    "revision": "de64589c5244407ce2d6010adb7c95fafe819dd7",
+    "snapshotAt": "2026-08-24T14:34:06.666Z"
+  },
+  "provider": "pg_search",
+  "run": {
+    "errorRate": 0,
+    "failedCases": 0,
+    "measuredRuns": 10,
+    "permissionLeaks": 0,
+    "sampleSize": 42,
+    "warmupRuns": 2,
+    "zeroResultRate": 0.241
+  },
+  "schemaVersion": 1
+}
