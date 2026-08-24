@@ -1,4 +1,5 @@
 import { DEFAULT_AGENT_CONFIG, INBOX_SESSION_ID } from '@lobechat/const';
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type {
   ChatSessionList,
   LobeAgentConfig,
@@ -99,15 +100,31 @@ export class SessionModel {
     };
   };
 
-  queryByKeyword = async (keyword: string) => {
-    if (!keyword) return [];
+  queryByKeyword = async (keyword: string) =>
+    measureSearchOperation(
+      {
+        entity: 'session',
+        operation: 'legacy_session',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => {
+        if (!keyword) return [];
 
-    const keywordLowerCase = keyword.toLowerCase();
+        const keywordLowerCase = keyword.toLowerCase();
+        const data = await this.findSessionsByKeywords({ keyword: keywordLowerCase });
 
-    const data = await this.findSessionsByKeywords({ keyword: keywordLowerCase });
-
-    return data.map((item) => this.mapSessionItem(item as any));
-  };
+        return measureSearchOperation(
+          {
+            entity: 'session',
+            operation: 'legacy_session',
+            phase: 'hydration',
+            provider: 'pg_search',
+          },
+          () => data.map((item) => this.mapSessionItem(item as any)),
+        );
+      },
+    );
 
   findByIdOrSlug = async (
     idOrSlug: string,
@@ -608,17 +625,26 @@ export class SessionModel {
     try {
       const bm25Query = sanitizeBm25Query(keyword);
 
-      const results = await this.db.query.agents.findMany({
-        limit: pageSize,
-        offset,
-        // Keep deterministic ordering for keyword search results
-        orderBy: [asc(agents.id)],
-        where: and(
-          this.agentsOwnership(),
-          sql`(${agents.title} @@@ ${bm25Query} OR ${agents.description} @@@ ${bm25Query})`,
-        ),
-        with: { agentsToSessions: { columns: {}, with: { session: true } } },
-      });
+      const results = await measureSearchOperation(
+        {
+          entity: 'session',
+          operation: 'legacy_session',
+          phase: 'database',
+          provider: 'pg_search',
+        },
+        async () =>
+          this.db.query.agents.findMany({
+            limit: pageSize,
+            offset,
+            // Keep deterministic ordering for keyword search results
+            orderBy: [asc(agents.id)],
+            where: and(
+              this.agentsOwnership(),
+              sql`(${agents.title} @@@ ${bm25Query} OR ${agents.description} @@@ ${bm25Query})`,
+            ),
+            with: { agentsToSessions: { columns: {}, with: { session: true } } },
+          }),
+      );
 
       // Filter and map results, ensuring valid session associations
       return results

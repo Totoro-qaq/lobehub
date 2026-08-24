@@ -1,0 +1,16 @@
+{
+  "name": "@lobechat/search-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./catalog": "./src/catalog.ts"
+  },
+  "scripts": {
+    "test": "vitest run --silent='passed-only'"
+  },
+  "dependencies": {
+    "@lobechat/observability-otel": "workspace:*"
+  }
+}

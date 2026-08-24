@@ -114,6 +114,9 @@ vertex-ai-key.json
 .agent-tracing/
 .llm-generation-tracing/
 
+# Search benchmark bindings contain runtime-only tenant and result IDs
+search-benchmark.local.json
+
 # AI coding tools
 .local/
 .claude/

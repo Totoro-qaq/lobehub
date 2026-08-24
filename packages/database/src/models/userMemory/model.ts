@@ -1,4 +1,8 @@
 import { AssociatedObjectSchema } from '@lobechat/memory-user-memory';
+import {
+  measureSearchOperation,
+  type SearchEntity,
+} from '@lobechat/observability-otel/modules/search';
 import type {
   MergeStrategyEnum,
   Optional,
@@ -422,6 +426,26 @@ export interface GetMemoriesResult {
   pageSize: number;
   total: number;
 }
+
+const toMemoryTelemetryEntity = (layer?: LayersEnum): SearchEntity => {
+  switch (layer) {
+    case LayersEnum.Activity: {
+      return 'memory_activity';
+    }
+    case LayersEnum.Experience: {
+      return 'memory_experience';
+    }
+    case LayersEnum.Identity: {
+      return 'memory_identity';
+    }
+    case LayersEnum.Preference: {
+      return 'memory_preference';
+    }
+    default: {
+      return 'memory_context';
+    }
+  }
+};
 
 export interface GetMemoryDetailParams {
   id: string;
@@ -935,6 +959,23 @@ export class UserMemoryModel {
   };
 
   queryMemories = async (params: QueryUserMemoriesParams = {}): Promise<GetMemoriesResult> => {
+    if (!params.q?.trim()) return this.queryMemoriesInternal(params);
+
+    return measureSearchOperation(
+      {
+        entity: toMemoryTelemetryEntity(params.layer),
+        getResultCount: (result) => result.items.length,
+        operation: 'memory_list',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.queryMemoriesInternal(params),
+    );
+  };
+
+  private queryMemoriesInternal = async (
+    params: QueryUserMemoriesParams = {},
+  ): Promise<GetMemoriesResult> => {
     const {
       categories,
       layer,
@@ -977,6 +1018,36 @@ export class UserMemoryModel {
     // Remove this fallback once the test database can execute the same BM25
     // operators/indexes as the production PostgreSQL environment.
     const supportsBm25 = !isPGliteDatabase(this.db);
+    const telemetryEntity = toMemoryTelemetryEntity(resolvedLayer);
+    const measureDatabase = async <T>(operation: () => Promise<T>): Promise<T> => {
+      if (!normalizedQuery || !supportsBm25) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: telemetryEntity,
+          operation: 'memory_list',
+          phase: 'database',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
+    const measureHydration = async <T extends GetMemoriesResult>(
+      operation: () => T,
+    ): Promise<T> => {
+      if (!normalizedQuery || !supportsBm25) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: telemetryEntity,
+          getResultCount: (result) => result.items.length,
+          operation: 'memory_list',
+          phase: 'hydration',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
 
     const conditions: Array<SQL | undefined> = [
       this.memoryWhere(userMemories),
@@ -1119,9 +1190,11 @@ export class UserMemoryModel {
           .innerJoin(userMemoriesContexts, joinCondition)
           .where(contextWhereClause);
 
-        const [rows, totalResult] = await Promise.all([rowsQuery, totalQuery]);
+        const [rows, totalResult] = await measureDatabase(async () =>
+          Promise.all([rowsQuery, totalQuery]),
+        );
 
-        return {
+        return measureHydration(() => ({
           items: rows.map((row) => {
             return {
               context: row.context,
@@ -1132,7 +1205,7 @@ export class UserMemoryModel {
           page: normalizedPage,
           pageSize: normalizedPageSize,
           total: Number(totalResult[0]?.count ?? 0),
-        };
+        }));
       }
       case LayersEnum.Activity: {
         const sortColumn =
@@ -1232,9 +1305,11 @@ export class UserMemoryModel {
           .innerJoin(userMemoriesActivities, joinCondition)
           .where(activityWhereClause);
 
-        const [rows, totalResult] = await Promise.all([rowsQuery, totalQuery]);
+        const [rows, totalResult] = await measureDatabase(async () =>
+          Promise.all([rowsQuery, totalQuery]),
+        );
 
-        return {
+        return measureHydration(() => ({
           items: rows.map((row) => {
             return {
               activity: row.activity,
@@ -1245,7 +1320,7 @@ export class UserMemoryModel {
           page: normalizedPage,
           pageSize: normalizedPageSize,
           total: Number(totalResult[0]?.count ?? 0),
-        };
+        }));
       }
       case LayersEnum.Experience: {
         const scoreColumn =
@@ -1332,9 +1407,11 @@ export class UserMemoryModel {
           .innerJoin(userMemoriesExperiences, joinCondition)
           .where(experienceWhereClause);
 
-        const [rows, totalResult] = await Promise.all([rowsQuery, totalQuery]);
+        const [rows, totalResult] = await measureDatabase(async () =>
+          Promise.all([rowsQuery, totalQuery]),
+        );
 
-        return {
+        return measureHydration(() => ({
           items: rows.map((row) => {
             return {
               experience: row.experience,
@@ -1345,7 +1422,7 @@ export class UserMemoryModel {
           page: normalizedPage,
           pageSize: normalizedPageSize,
           total: Number(totalResult[0]?.count ?? 0),
-        };
+        }));
       }
       case LayersEnum.Identity: {
         const orderByClauses = buildOrderBy(
@@ -1425,9 +1502,11 @@ export class UserMemoryModel {
           .innerJoin(userMemoriesIdentities, joinCondition)
           .where(identityWhereClause);
 
-        const [rows, totalResult] = await Promise.all([rowsQuery, totalQuery]);
+        const [rows, totalResult] = await measureDatabase(async () =>
+          Promise.all([rowsQuery, totalQuery]),
+        );
 
-        return {
+        return measureHydration(() => ({
           items: rows.map((row) => {
             return {
               identity: row.identity,
@@ -1438,7 +1517,7 @@ export class UserMemoryModel {
           page: normalizedPage,
           pageSize: normalizedPageSize,
           total: Number(totalResult[0]?.count ?? 0),
-        };
+        }));
       }
       case LayersEnum.Preference: {
         const scoreColumn =
@@ -1522,9 +1601,11 @@ export class UserMemoryModel {
           .innerJoin(userMemoriesPreferences, joinCondition)
           .where(preferenceWhereClause);
 
-        const [rows, totalResult] = await Promise.all([rowsQuery, totalQuery]);
+        const [rows, totalResult] = await measureDatabase(async () =>
+          Promise.all([rowsQuery, totalQuery]),
+        );
 
-        return {
+        return measureHydration(() => ({
           items: rows.map((row) => {
             return {
               layer: LayersEnum.Preference,
@@ -1535,7 +1616,7 @@ export class UserMemoryModel {
           page: normalizedPage,
           pageSize: normalizedPageSize,
           total: Number(totalResult[0]?.count ?? 0),
-        };
+        }));
       }
       default: {
         return {

@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { collectSearchMeasurements } from '@lobechat/observability-otel/modules/search';
 import { RelationshipEnum } from '@lobechat/types';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -406,6 +407,15 @@ describe('UserMemoryIdentityModel', () => {
       expect(result.total).toBe(2);
     });
 
+    it('does not emit search telemetry without a query', async () => {
+      const { measurements, value } = await collectSearchMeasurements(() =>
+        identityModel.queryList(),
+      );
+
+      expect(value.items).toHaveLength(2);
+      expect(measurements).toEqual([]);
+    });
+
     it('should return all relationships when specified', async () => {
       const result = await identityModel.queryList({
         relationships: [RelationshipEnum.Self, RelationshipEnum.Friend],
@@ -454,13 +464,20 @@ describe('UserMemoryIdentityModel', () => {
     // BM25 search requires pg_search extension (ParadeDB), not available in PGlite
     const isServerDB = process.env.TEST_SERVER_DB === '1';
     it.skipIf(!isServerDB)('should search by query in title', async () => {
-      const result = await identityModel.queryList({
-        q: 'Searchable Title',
-        relationships: [RelationshipEnum.Self, RelationshipEnum.Friend],
-      });
+      const { measurements, value: result } = await collectSearchMeasurements(() =>
+        identityModel.queryList({
+          q: 'Searchable Title',
+          relationships: [RelationshipEnum.Self, RelationshipEnum.Friend],
+        }),
+      );
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('list-id-3');
+      expect(measurements.map(({ phase }) => phase).sort()).toEqual([
+        'api',
+        'database',
+        'hydration',
+      ]);
     });
 
     it.skipIf(!isServerDB)('should search by query in description', async () => {

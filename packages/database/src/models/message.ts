@@ -1,5 +1,6 @@
 import { INBOX_SESSION_ID } from '@lobechat/const';
 import { parse } from '@lobechat/conversation-flow';
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type {
   ChatAudioItem,
   ChatFileItem,
@@ -60,6 +61,7 @@ import { sanitizeNullBytes } from '@/utils/sanitizeNullBytes';
 import { today } from '@/utils/time';
 
 import {
+  agents,
   agentsToSessions,
   chunks,
   documents,
@@ -401,6 +403,23 @@ export class MessageModel {
 
   private ownership = () =>
     buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, messages);
+
+  /** Workspace messages inherit their parent agent's visibility. */
+  private keywordAgentVisibility = () =>
+    this.workspaceId
+      ? or(
+          isNull(messages.agentId),
+          inArray(
+            messages.agentId,
+            this.db
+              .select({ id: agents.id })
+              .from(agents)
+              .where(
+                buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, agents),
+              ),
+          ),
+        )
+      : undefined;
 
   private pluginsOwnership = () =>
     buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, messagePlugins);
@@ -1990,18 +2009,50 @@ export class MessageModel {
     return result as DBMessageItem[];
   };
 
-  queryByKeyword = async (keyword: string) => {
-    if (!keyword.trim()) return [];
+  queryByKeyword = async (keyword: string) =>
+    measureSearchOperation(
+      {
+        entity: 'message',
+        operation: 'legacy_message',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => {
+        if (!keyword.trim()) return [];
 
-    const bm25Query = sanitizeBm25Query(keyword);
-    const result = await this.db
-      .select()
-      .from(messages)
-      .where(and(this.ownership(), sql`${messages.content} @@@ ${bm25Query}`))
-      .orderBy(desc(messages.createdAt));
+        const bm25Query = sanitizeBm25Query(keyword);
+        const result = await measureSearchOperation(
+          {
+            entity: 'message',
+            operation: 'legacy_message',
+            phase: 'database',
+            provider: 'pg_search',
+          },
+          async () =>
+            this.db
+              .select()
+              .from(messages)
+              .where(
+                and(
+                  this.ownership(),
+                  this.keywordAgentVisibility(),
+                  sql`${messages.content} @@@ ${bm25Query}`,
+                ),
+              )
+              .orderBy(desc(messages.createdAt)),
+        );
 
-    return result as DBMessageItem[];
-  };
+        return measureSearchOperation(
+          {
+            entity: 'message',
+            operation: 'legacy_message',
+            phase: 'hydration',
+            provider: 'pg_search',
+          },
+          () => result as DBMessageItem[],
+        );
+      },
+    );
 
   /**
    * Ownership-scoped analytics filter conditions, shared by count /

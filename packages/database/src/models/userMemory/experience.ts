@@ -1,3 +1,4 @@
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type { ExperienceListParams, ExperienceListResult } from '@lobechat/types';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
@@ -65,6 +66,23 @@ export class UserMemoryExperienceModel {
    * Returns a flat structure optimized for frontend display
    */
   queryList = async (params: ExperienceListParams = {}): Promise<ExperienceListResult> => {
+    if (!params.q?.trim()) return this.queryListInternal(params);
+
+    return measureSearchOperation(
+      {
+        entity: 'memory_experience',
+        getResultCount: (result) => result.items.length,
+        operation: 'memory_list',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.queryListInternal(params),
+    );
+  };
+
+  private queryListInternal = async (
+    params: ExperienceListParams = {},
+  ): Promise<ExperienceListResult> => {
     const { order = 'desc', page = 1, pageSize = 20, q, sort, tags, types } = params;
 
     const normalizedPage = Math.max(1, page);
@@ -74,6 +92,35 @@ export class UserMemoryExperienceModel {
     const bm25MatchQuery = normalizedQuery
       ? normalizeBm25MatchQuery(normalizedQuery, SAFE_BM25_QUERY_OPTIONS)
       : '';
+    const measureDatabase = async <T>(operation: () => Promise<T>): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_experience',
+          operation: 'memory_list',
+          phase: 'database',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
+    const measureHydration = async <T extends ExperienceListResult>(
+      operation: () => T,
+    ): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_experience',
+          getResultCount: (result) => result.items.length,
+          operation: 'memory_list',
+          phase: 'hydration',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
 
     // Build WHERE conditions
     const conditions: Array<SQL | undefined> = [
@@ -111,40 +158,42 @@ export class UserMemoryExperienceModel {
     );
 
     // Execute queries in parallel
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select({
-          action: userMemoriesExperiences.action,
-          capturedAt: userMemoriesExperiences.capturedAt,
-          createdAt: userMemoriesExperiences.createdAt,
-          id: userMemoriesExperiences.id,
-          keyLearning: userMemoriesExperiences.keyLearning,
-          scoreConfidence: userMemoriesExperiences.scoreConfidence,
-          situation: userMemoriesExperiences.situation,
-          tags: userMemoriesExperiences.tags,
-          title: userMemories.title,
-          type: userMemoriesExperiences.type,
-          updatedAt: userMemoriesExperiences.updatedAt,
-        })
-        .from(userMemoriesExperiences)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause)
-        .orderBy(...orderByClauses)
-        .limit(normalizedPageSize)
-        .offset(offset),
-      this.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(userMemoriesExperiences)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause),
-    ]);
+    const [rows, totalResult] = await measureDatabase(async () =>
+      Promise.all([
+        this.db
+          .select({
+            action: userMemoriesExperiences.action,
+            capturedAt: userMemoriesExperiences.capturedAt,
+            createdAt: userMemoriesExperiences.createdAt,
+            id: userMemoriesExperiences.id,
+            keyLearning: userMemoriesExperiences.keyLearning,
+            scoreConfidence: userMemoriesExperiences.scoreConfidence,
+            situation: userMemoriesExperiences.situation,
+            tags: userMemoriesExperiences.tags,
+            title: userMemories.title,
+            type: userMemoriesExperiences.type,
+            updatedAt: userMemoriesExperiences.updatedAt,
+          })
+          .from(userMemoriesExperiences)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause)
+          .orderBy(...orderByClauses)
+          .limit(normalizedPageSize)
+          .offset(offset),
+        this.db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(userMemoriesExperiences)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause),
+      ]),
+    );
 
-    return {
+    return measureHydration(() => ({
       items: rows,
       page: normalizedPage,
       pageSize: normalizedPageSize,
       total: Number(totalResult[0]?.count ?? 0),
-    };
+    }));
   };
 
   findById = async (id: string) => {

@@ -1,3 +1,4 @@
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type {
   ChatTopicMetadata,
   ChatTopicStatus,
@@ -310,6 +311,23 @@ export class TopicModel {
 
   private messageOwnership = () =>
     buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, messages);
+
+  /** Workspace topics and messages inherit their parent agent's visibility. */
+  private keywordAgentVisibility = (agentId: typeof topics.agentId | typeof messages.agentId) =>
+    this.workspaceId
+      ? or(
+          isNull(agentId),
+          inArray(
+            agentId,
+            this.db
+              .select({ id: agents.id })
+              .from(agents)
+              .where(
+                buildWorkspaceWhere({ userId: this.userId, workspaceId: this.workspaceId }, agents),
+              ),
+          ),
+        )
+      : undefined;
   // **************** Query *************** //
 
   query = async ({
@@ -827,70 +845,129 @@ export class TopicModel {
   queryByKeyword = async (
     keyword: string,
     scope?: string | null | TopicKeywordScope,
-  ): Promise<TopicItem[]> => {
-    if (!keyword.trim()) return [];
+  ): Promise<TopicItem[]> =>
+    measureSearchOperation(
+      {
+        entity: 'topic',
+        operation: 'legacy_topic',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => {
+        if (!keyword.trim()) return [];
 
-    // Backward compatibility: a bare string / null second argument is treated
-    // as the legacy `containerId` (sessionId or groupId).
-    const scopeOptions: TopicKeywordScope =
-      scope && typeof scope === 'object' ? scope : { containerId: scope ?? null };
-    const scopeCondition = this.matchKeywordScope(scopeOptions);
+        // Backward compatibility: a bare string / null second argument is treated
+        // as the legacy `containerId` (sessionId or groupId).
+        const scopeOptions: TopicKeywordScope =
+          scope && typeof scope === 'object' ? scope : { containerId: scope ?? null };
+        const scopeCondition = this.matchKeywordScope(scopeOptions);
 
-    const bm25Query = sanitizeBm25Query(keyword);
+        const bm25Query = sanitizeBm25Query(keyword);
 
-    // Run title and message content searches in parallel
-    const [topicsByTitle, topicIdsByMessages] = await Promise.all([
-      // Query topics matching by title (BM25)
-      this.db
-        .select()
-        .from(topics)
-        .where(and(this.ownership(), scopeCondition, sql`${topics.title} @@@ ${bm25Query}`))
-        .orderBy(desc(topics.updatedAt)),
-      // Query topic IDs matching by message content (BM25)
-      this.db
-        .select({ topicId: messages.topicId })
-        .from(messages)
-        .innerJoin(topics, eq(messages.topicId, topics.id))
-        .where(
-          and(
-            this.messageOwnership(),
-            sql`${messages.content} @@@ ${bm25Query}`,
-            this.ownership(),
-            scopeCondition,
-          ),
-        )
-        .groupBy(messages.topicId),
-    ]);
-    // If no topics found by message content, return topics matching by title
-    if (topicIdsByMessages.length === 0) {
-      return topicsByTitle;
-    }
+        // Run title and message content searches in parallel
+        const [topicsByTitle, topicIdsByMessages] = await measureSearchOperation(
+          {
+            entity: 'topic',
+            getResultCount: ([titleRows, messageRows]) => titleRows.length + messageRows.length,
+            operation: 'legacy_topic',
+            phase: 'database',
+            provider: 'pg_search',
+          },
+          async () =>
+            Promise.all([
+              // Query topics matching by title (BM25)
+              this.db
+                .select()
+                .from(topics)
+                .where(
+                  and(
+                    this.ownership(),
+                    this.keywordAgentVisibility(topics.agentId),
+                    scopeCondition,
+                    sql`${topics.title} @@@ ${bm25Query}`,
+                  ),
+                )
+                .orderBy(desc(topics.updatedAt)),
+              // Query topic IDs matching by message content (BM25)
+              this.db
+                .select({ topicId: messages.topicId })
+                .from(messages)
+                .innerJoin(topics, eq(messages.topicId, topics.id))
+                .where(
+                  and(
+                    this.messageOwnership(),
+                    this.keywordAgentVisibility(messages.agentId),
+                    sql`${messages.content} @@@ ${bm25Query}`,
+                    this.ownership(),
+                    this.keywordAgentVisibility(topics.agentId),
+                    scopeCondition,
+                  ),
+                )
+                .groupBy(messages.topicId),
+            ]),
+        );
+        // If no topics found by message content, return topics matching by title
+        if (topicIdsByMessages.length === 0) {
+          return measureSearchOperation(
+            {
+              entity: 'topic',
+              operation: 'legacy_topic',
+              phase: 'hydration',
+              provider: 'pg_search',
+            },
+            () => topicsByTitle,
+          );
+        }
 
-    // Query topics found by message content
-    const topicIds = topicIdsByMessages
-      .map((t) => t.topicId)
-      .filter((id): id is string => id !== null);
+        // Query topics found by message content
+        const topicIds = topicIdsByMessages
+          .map((topic) => topic.topicId)
+          .filter((id): id is string => id !== null);
 
-    const topicsByMessages = await this.db.query.topics.findMany({
-      orderBy: [desc(topics.updatedAt)],
-      where: and(this.ownership(), inArray(topics.id, topicIds)),
-    });
+        const topicsByMessages = await measureSearchOperation(
+          {
+            entity: 'topic',
+            operation: 'legacy_topic',
+            phase: 'database',
+            provider: 'pg_search',
+          },
+          async () =>
+            this.db.query.topics.findMany({
+              orderBy: [desc(topics.updatedAt)],
+              where: and(
+                this.ownership(),
+                this.keywordAgentVisibility(topics.agentId),
+                inArray(topics.id, topicIds),
+              ),
+            }),
+        );
 
-    // Merge results and deduplicate
-    const allTopics = [...topicsByTitle];
-    const existingIds = new Set(topicsByTitle.map((t) => t.id));
+        return measureSearchOperation(
+          {
+            entity: 'topic',
+            operation: 'legacy_topic',
+            phase: 'hydration',
+            provider: 'pg_search',
+          },
+          () => {
+            // Merge results and deduplicate
+            const allTopics = [...topicsByTitle];
+            const existingIds = new Set(topicsByTitle.map((topic) => topic.id));
 
-    for (const topic of topicsByMessages) {
-      if (!existingIds.has(topic.id)) {
-        allTopics.push(topic);
-      }
-    }
+            for (const topic of topicsByMessages) {
+              if (!existingIds.has(topic.id)) {
+                allTopics.push(topic);
+              }
+            }
 
-    // Sort by update time
-    return allTopics.sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+            // Sort by update time
+            return allTopics.sort(
+              (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+            );
+          },
+        );
+      },
     );
-  };
   count = async (params?: {
     agentId?: string;
     containerId?: string | null;

@@ -1,9 +1,12 @@
+import type { SearchEntity } from '@lobechat/observability-otel/modules/search';
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import { LIBRARY_HIDDEN_FILE_SOURCES } from '@lobechat/types';
 import {
   and,
   desc,
   eq,
   inArray,
+  isNotNull,
   isNull,
   ne,
   notInArray,
@@ -209,6 +212,32 @@ export interface SearchOptions {
   type?: SearchResultType;
 }
 
+const toTelemetryEntity = (type?: SearchResultType): SearchEntity => {
+  switch (type) {
+    case 'agent':
+    case 'file':
+    case 'folder':
+    case 'memory':
+    case 'message':
+    case 'page':
+    case 'topic': {
+      return type;
+    }
+    case 'chatGroup': {
+      return 'chat_group';
+    }
+    case 'knowledgeBase': {
+      return 'knowledge_base';
+    }
+    case 'pageContent': {
+      return 'document';
+    }
+    default: {
+      return 'all';
+    }
+  }
+};
+
 /**
  * Topics and messages are ordered by recency rather than BM25 score, so we fetch
  * a larger candidate pool first (most relevant matches), then keep the most recent
@@ -380,6 +409,18 @@ export class SearchRepo {
    * Search across agents, topics, files, and pages
    */
   async search(options: SearchOptions): Promise<SearchResult[]> {
+    return measureSearchOperation(
+      {
+        entity: toTelemetryEntity(options.type),
+        operation: 'unified',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.searchInternal(options),
+    );
+  }
+
+  private async searchInternal(options: SearchOptions): Promise<SearchResult[]> {
     const { query, type, limitPerType = 5, agentId, contextType } = options;
 
     // Early return for empty query
@@ -593,44 +634,62 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('agent_hits');
 
-    const rows = await this.db
-      .select({
-        avatar: hits.avatar,
-        backgroundColor: hits.backgroundColor,
-        createdAt: hits.createdAt,
-        description: hits.description,
-        id: hits.id,
-        score: hits.score,
-        slug: hits.slug,
-        tags: hits.tags,
-        title: hits.title,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .where(this.liftedScopeWhere(hits.workspaceId))
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'agent',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            avatar: hits.avatar,
+            backgroundColor: hits.backgroundColor,
+            createdAt: hits.createdAt,
+            description: hits.description,
+            id: hits.id,
+            score: hits.score,
+            slug: hits.slug,
+            tags: hits.tags,
+            title: hits.title,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .where(this.liftedScopeWhere(hits.workspaceId))
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => {
-      const meta = normalizeInboxAgentMeta(
-        { avatar: row.avatar, title: row.title },
-        { slug: row.slug },
-      );
+    return measureSearchOperation(
+      {
+        entity: 'agent',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => {
+          const meta = normalizeInboxAgentMeta(
+            { avatar: row.avatar, title: row.title },
+            { slug: row.slug },
+          );
 
-      return {
-        avatar: meta.avatar,
-        backgroundColor: row.backgroundColor,
-        createdAt: row.createdAt,
-        description: row.description,
-        id: row.id,
-        relevance: row.relevance,
-        slug: row.slug,
-        tags: (row.tags as string[]) || [],
-        title: meta.title || '',
-        type: 'agent' as const,
-        updatedAt: row.updatedAt,
-      };
-    });
+          return {
+            avatar: meta.avatar,
+            backgroundColor: row.backgroundColor,
+            createdAt: row.createdAt,
+            description: row.description,
+            id: row.id,
+            relevance: row.relevance,
+            slug: row.slug,
+            tags: (row.tags as string[]) || [],
+            title: meta.title || '',
+            type: 'agent' as const,
+            updatedAt: row.updatedAt,
+          };
+        }),
+    );
   }
 
   /**
@@ -678,69 +737,93 @@ export class SearchRepo {
       )
       .as('topic_hits');
 
-    const rows = await this.db
-      .select({
-        // agents.id is selected as a sentinel: non-null only when the JOIN
-        // matched an agent owned by this user. Topics carrying an agentId
-        // that points to another user's agent (possible via migrated/crafted
-        // data) yield null here, so the renderer falls back to the
-        // agent-less subtitle and never surfaces foreign metadata.
-        agentAvatar: agents.avatar,
-        agentBackgroundColor: agents.backgroundColor,
-        agentId: hits.agentId,
-        agentMatchedId: agents.id,
-        agentName: agents.name,
-        agentSlug: agents.slug,
-        agentTitle: agents.title,
-        content: hits.content,
-        createdAt: hits.createdAt,
-        favorite: hits.favorite,
-        groupId: hits.groupId,
-        id: hits.id,
-        score: hits.score,
-        sessionId: hits.sessionId,
-        title: hits.title,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .leftJoin(agents, and(eq(hits.agentId, agents.id), buildWorkspaceWhere(this.scope, agents)))
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          agentId ? eq(hits.agentId, agentId) : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(candidateLimit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'topic',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            // agents.id is selected as a sentinel: non-null only when the JOIN
+            // matched an agent owned by this user. Topics carrying an agentId
+            // that points to another user's agent (possible via migrated/crafted
+            // data) yield null here, so the renderer falls back to the
+            // agent-less subtitle and never surfaces foreign metadata.
+            agentAvatar: agents.avatar,
+            agentBackgroundColor: agents.backgroundColor,
+            agentId: hits.agentId,
+            agentMatchedId: agents.id,
+            agentName: agents.name,
+            agentSlug: agents.slug,
+            agentTitle: agents.title,
+            content: hits.content,
+            createdAt: hits.createdAt,
+            favorite: hits.favorite,
+            groupId: hits.groupId,
+            id: hits.id,
+            score: hits.score,
+            sessionId: hits.sessionId,
+            title: hits.title,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .leftJoin(
+            agents,
+            and(eq(hits.agentId, agents.id), buildWorkspaceWhere(this.scope, agents)),
+          )
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              agentId ? eq(hits.agentId, agentId) : undefined,
+              // In workspace mode, agent-less topics remain searchable while
+              // agent topics inherit the parent's visibility through the scoped JOIN.
+              this.workspaceId ? or(isNull(hits.agentId), isNotNull(agents.id)) : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(candidateLimit),
+    );
 
-    return this.mapScoresToRelevance(rows)
-      .map((row) => ({
-        agent: row.agentMatchedId
-          ? {
-              avatar: normalizeInboxAgentMeta(
-                { avatar: row.agentAvatar, title: row.agentTitle },
-                { slug: row.agentSlug },
-              ).avatar,
-              backgroundColor: row.agentBackgroundColor,
-              title: normalizeInboxAgentTitle(row.agentTitle, {
-                slug: row.agentSlug,
-              }),
-            }
-          : null,
-        agentId: row.agentId,
-        createdAt: row.createdAt,
-        description: this.truncate(row.content),
-        favorite: row.favorite,
-        groupId: row.groupId,
-        id: row.id,
-        relevance: row.relevance,
-        sessionId: row.sessionId,
-        title: row.title || '',
-        type: 'topic' as const,
-        updatedAt: row.updatedAt,
-      }))
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-      .slice(0, limit);
+    return measureSearchOperation(
+      {
+        entity: 'topic',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows)
+          .map((row) => ({
+            agent: row.agentMatchedId
+              ? {
+                  avatar: normalizeInboxAgentMeta(
+                    { avatar: row.agentAvatar, title: row.agentTitle },
+                    { slug: row.agentSlug },
+                  ).avatar,
+                  backgroundColor: row.agentBackgroundColor,
+                  title: normalizeInboxAgentTitle(row.agentTitle, {
+                    slug: row.agentSlug,
+                  }),
+                }
+              : null,
+            agentId: row.agentId,
+            createdAt: row.createdAt,
+            description: this.truncate(row.content),
+            favorite: row.favorite,
+            groupId: row.groupId,
+            id: row.id,
+            relevance: row.relevance,
+            sessionId: row.sessionId,
+            title: row.title || '',
+            type: 'topic' as const,
+            updatedAt: row.updatedAt,
+          }))
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+          .slice(0, limit),
+    );
   }
 
   /**
@@ -789,54 +872,78 @@ export class SearchRepo {
       )
       .as('message_hits');
 
-    const rows = await this.db
-      .select({
-        agentId: hits.agentId,
-        agentName: agents.name,
-        agentSlug: agents.slug,
-        agentTitle: agents.title,
-        content: hits.content,
-        createdAt: hits.createdAt,
-        groupId: hits.groupId,
-        id: hits.id,
-        model: hits.model,
-        role: hits.role,
-        score: hits.score,
-        topicId: hits.topicId,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .leftJoin(agents, eq(hits.agentId, agents.id))
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          agentId ? eq(hits.agentId, agentId) : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(candidateLimit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'message',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            agentId: hits.agentId,
+            agentName: agents.name,
+            agentSlug: agents.slug,
+            agentTitle: agents.title,
+            content: hits.content,
+            createdAt: hits.createdAt,
+            groupId: hits.groupId,
+            id: hits.id,
+            model: hits.model,
+            role: hits.role,
+            score: hits.score,
+            topicId: hits.topicId,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .leftJoin(
+            agents,
+            and(eq(hits.agentId, agents.id), buildWorkspaceWhere(this.scope, agents)),
+          )
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              agentId ? eq(hits.agentId, agentId) : undefined,
+              // Workspace messages inherit their parent agent's visibility. Keep
+              // legacy agent-less messages reachable without exposing private parents.
+              this.workspaceId ? or(isNull(hits.agentId), isNotNull(agents.id)) : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(candidateLimit),
+    );
 
-    return this.mapScoresToRelevance(rows)
-      .map((row) => ({
-        agentId: row.agentId,
-        content: row.content || '',
-        createdAt: row.createdAt,
-        description:
-          normalizeInboxAgentTitle(row.agentTitle, {
-            slug: row.agentSlug,
-          }) || 'General Chat',
-        groupId: row.groupId,
-        id: row.id,
-        model: row.model,
-        relevance: row.relevance,
-        role: row.role,
-        title: this.truncate(row.content) || '',
-        topicId: row.topicId,
-        type: 'message' as const,
-        updatedAt: row.updatedAt,
-      }))
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return measureSearchOperation(
+      {
+        entity: 'message',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows)
+          .map((row) => ({
+            agentId: row.agentId,
+            content: row.content || '',
+            createdAt: row.createdAt,
+            description:
+              normalizeInboxAgentTitle(row.agentTitle, {
+                slug: row.agentSlug,
+              }) || 'General Chat',
+            groupId: row.groupId,
+            id: row.id,
+            model: row.model,
+            relevance: row.relevance,
+            role: row.role,
+            title: this.truncate(row.content) || '',
+            topicId: row.topicId,
+            type: 'message' as const,
+            updatedAt: row.updatedAt,
+          }))
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, limit),
+    );
   }
 
   /**
@@ -879,56 +986,74 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('file_hits');
 
-    const rows = await this.db
-      .select({
-        content: documents.content,
-        createdAt: hits.createdAt,
-        fileType: hits.fileType,
-        id: hits.id,
-        knowledgeBaseId: knowledgeBaseFiles.knowledgeBaseId,
-        name: hits.name,
-        score: hits.score,
-        size: hits.size,
-        updatedAt: hits.updatedAt,
-        url: hits.url,
-      })
-      .from(hits)
-      .leftJoin(documents, eq(hits.id, documents.fileId))
-      .leftJoin(knowledgeBaseFiles, eq(hits.id, knowledgeBaseFiles.fileId))
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          // A file linked to ANY restricted KB is fully hidden (over-hiding
-          // beats leaking through a shared membership) — subquery instead of
-          // the joined column so multi-KB rows cannot slip through.
-          excludeKbIds && excludeKbIds.length > 0
-            ? notInArray(
-                hits.id,
-                this.db
-                  .select({ fileId: knowledgeBaseFiles.fileId })
-                  .from(knowledgeBaseFiles)
-                  .where(inArray(knowledgeBaseFiles.knowledgeBaseId, excludeKbIds)),
-              )
-            : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'file',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            content: documents.content,
+            createdAt: hits.createdAt,
+            fileType: hits.fileType,
+            id: hits.id,
+            knowledgeBaseId: knowledgeBaseFiles.knowledgeBaseId,
+            name: hits.name,
+            score: hits.score,
+            size: hits.size,
+            updatedAt: hits.updatedAt,
+            url: hits.url,
+          })
+          .from(hits)
+          .leftJoin(documents, eq(hits.id, documents.fileId))
+          .leftJoin(knowledgeBaseFiles, eq(hits.id, knowledgeBaseFiles.fileId))
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              // A file linked to ANY restricted KB is fully hidden (over-hiding
+              // beats leaking through a shared membership) — subquery instead of
+              // the joined column so multi-KB rows cannot slip through.
+              excludeKbIds && excludeKbIds.length > 0
+                ? notInArray(
+                    hits.id,
+                    this.db
+                      .select({ fileId: knowledgeBaseFiles.fileId })
+                      .from(knowledgeBaseFiles)
+                      .where(inArray(knowledgeBaseFiles.knowledgeBaseId, excludeKbIds)),
+                  )
+                : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => ({
-      createdAt: row.createdAt,
-      description: this.truncate(row.content),
-      fileType: row.fileType,
-      id: row.id,
-      knowledgeBaseId: row.knowledgeBaseId,
-      name: row.name,
-      relevance: row.relevance,
-      size: row.size,
-      title: row.name,
-      type: 'file' as const,
-      updatedAt: row.updatedAt,
-      url: row.url,
-    }));
+    return measureSearchOperation(
+      {
+        entity: 'file',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => ({
+          createdAt: row.createdAt,
+          description: this.truncate(row.content),
+          fileType: row.fileType,
+          id: row.id,
+          knowledgeBaseId: row.knowledgeBaseId,
+          name: row.name,
+          relevance: row.relevance,
+          size: row.size,
+          title: row.name,
+          type: 'file' as const,
+          updatedAt: row.updatedAt,
+          url: row.url,
+        })),
+    );
   }
 
   /**
@@ -966,44 +1091,62 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('folder_hits');
 
-    const rows = await this.db
-      .select({
-        createdAt: hits.createdAt,
-        description: hits.description,
-        filename: hits.filename,
-        id: hits.id,
-        knowledgeBaseId: hits.knowledgeBaseId,
-        score: hits.score,
-        slug: hits.slug,
-        title: hits.title,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          excludeKbIds && excludeKbIds.length > 0
-            ? or(isNull(hits.knowledgeBaseId), notInArray(hits.knowledgeBaseId, excludeKbIds))
-            : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'folder',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            createdAt: hits.createdAt,
+            description: hits.description,
+            filename: hits.filename,
+            id: hits.id,
+            knowledgeBaseId: hits.knowledgeBaseId,
+            score: hits.score,
+            slug: hits.slug,
+            title: hits.title,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              excludeKbIds && excludeKbIds.length > 0
+                ? or(isNull(hits.knowledgeBaseId), notInArray(hits.knowledgeBaseId, excludeKbIds))
+                : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => {
-      const title = row.title || row.filename || 'Untitled';
-      return {
-        createdAt: row.createdAt,
-        description: row.description,
-        id: row.id,
-        knowledgeBaseId: row.knowledgeBaseId,
-        relevance: row.relevance,
-        slug: row.slug,
-        title,
-        type: 'folder' as const,
-        updatedAt: row.updatedAt,
-      };
-    });
+    return measureSearchOperation(
+      {
+        entity: 'folder',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => {
+          const title = row.title || row.filename || 'Untitled';
+          return {
+            createdAt: row.createdAt,
+            description: row.description,
+            id: row.id,
+            knowledgeBaseId: row.knowledgeBaseId,
+            relevance: row.relevance,
+            slug: row.slug,
+            title,
+            type: 'folder' as const,
+            updatedAt: row.updatedAt,
+          };
+        }),
+    );
   }
 
   /**
@@ -1040,53 +1183,71 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('page_hits');
 
-    const rows = await this.db
-      .select({
-        createdAt: hits.createdAt,
-        filename: hits.filename,
-        id: hits.id,
-        score: hits.score,
-        title: hits.title,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          excludeKbIds && excludeKbIds.length > 0
-            ? or(isNull(hits.knowledgeBaseId), notInArray(hits.knowledgeBaseId, excludeKbIds))
-            : undefined,
-          // Parsed-file pages leave `knowledgeBaseId` null — their KB
-          // membership lives on `fileId` → `knowledge_base_files`.
-          excludeKbIds && excludeKbIds.length > 0
-            ? or(
-                isNull(hits.fileId),
-                notInArray(
-                  hits.fileId,
-                  this.db
-                    .select({ fileId: knowledgeBaseFiles.fileId })
-                    .from(knowledgeBaseFiles)
-                    .where(inArray(knowledgeBaseFiles.knowledgeBaseId, excludeKbIds)),
-                ),
-              )
-            : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'page',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            createdAt: hits.createdAt,
+            filename: hits.filename,
+            id: hits.id,
+            score: hits.score,
+            title: hits.title,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              excludeKbIds && excludeKbIds.length > 0
+                ? or(isNull(hits.knowledgeBaseId), notInArray(hits.knowledgeBaseId, excludeKbIds))
+                : undefined,
+              // Parsed-file pages leave `knowledgeBaseId` null — their KB
+              // membership lives on `fileId` → `knowledge_base_files`.
+              excludeKbIds && excludeKbIds.length > 0
+                ? or(
+                    isNull(hits.fileId),
+                    notInArray(
+                      hits.fileId,
+                      this.db
+                        .select({ fileId: knowledgeBaseFiles.fileId })
+                        .from(knowledgeBaseFiles)
+                        .where(inArray(knowledgeBaseFiles.knowledgeBaseId, excludeKbIds)),
+                    ),
+                  )
+                : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => {
-      const title = row.title || row.filename || 'Untitled';
-      return {
-        createdAt: row.createdAt,
-        description: null,
-        id: row.id,
-        relevance: row.relevance,
-        title,
-        type: 'page' as const,
-        updatedAt: row.updatedAt,
-      };
-    });
+    return measureSearchOperation(
+      {
+        entity: 'page',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => {
+          const title = row.title || row.filename || 'Untitled';
+          return {
+            createdAt: row.createdAt,
+            description: null,
+            id: row.id,
+            relevance: row.relevance,
+            title,
+            type: 'page' as const,
+            updatedAt: row.updatedAt,
+          };
+        }),
+    );
   }
 
   /**
@@ -1114,6 +1275,22 @@ export class SearchRepo {
     query: string,
     knowledgeBaseIds: string[],
     limit: number = 20,
+  ): Promise<KnowledgeBaseDocumentHit[]> {
+    return measureSearchOperation(
+      {
+        entity: 'document',
+        operation: 'knowledge_base_documents',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.searchKnowledgeBaseDocumentsInternal(query, knowledgeBaseIds, limit),
+    );
+  }
+
+  private async searchKnowledgeBaseDocumentsInternal(
+    query: string,
+    knowledgeBaseIds: string[],
+    limit: number,
   ): Promise<KnowledgeBaseDocumentHit[]> {
     if (!query || query.trim() === '') return [];
     if (!knowledgeBaseIds || knowledgeBaseIds.length === 0) return [];
@@ -1171,29 +1348,46 @@ export class SearchRepo {
       .orderBy(sql`paradedb.score(${documents.id}) DESC`)
       .limit(limit);
 
-    const [inlineRows, fileBackedRows] = await Promise.all([
-      inlineRowsPromise,
-      fileBackedRowsPromise,
-    ]);
+    const [inlineRows, fileBackedRows] = await measureSearchOperation(
+      {
+        entity: 'document',
+        getResultCount: ([inlineResults, fileBackedResults]) =>
+          inlineResults.length + fileBackedResults.length,
+        operation: 'knowledge_base_documents',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () => Promise.all([inlineRowsPromise, fileBackedRowsPromise]),
+    );
 
-    const byId = new Map<string, (typeof inlineRows)[number]>();
-    for (const row of [...inlineRows, ...fileBackedRows]) {
-      const prev = byId.get(row.id);
-      if (!prev || row.score > prev.score) byId.set(row.id, row);
-    }
-    const merged = Array.from(byId.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return measureSearchOperation(
+      {
+        entity: 'document',
+        operation: 'knowledge_base_documents',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () => {
+        const byId = new Map<string, (typeof inlineRows)[number]>();
+        for (const row of [...inlineRows, ...fileBackedRows]) {
+          const previous = byId.get(row.id);
+          if (!previous || row.score > previous.score) byId.set(row.id, row);
+        }
+        const merged = Array.from(byId.values())
+          .sort((a, b) => b.score - a.score)
+          .slice(0, limit);
 
-    return this.mapScoresToRelevance(merged).map((row) => ({
-      documentId: row.id,
-      fileId: row.fileId ?? undefined,
-      knowledgeBaseId: row.knowledgeBaseId ?? '',
-      relevance: row.relevance,
-      snippet: this.truncate(row.content, 300) ?? '',
-      title: row.title || row.filename || 'Untitled',
-      updatedAt: row.updatedAt,
-    }));
+        return this.mapScoresToRelevance(merged).map((row) => ({
+          documentId: row.id,
+          fileId: row.fileId ?? undefined,
+          knowledgeBaseId: row.knowledgeBaseId ?? '',
+          relevance: row.relevance,
+          snippet: this.truncate(row.content, 300) ?? '',
+          title: row.title || row.filename || 'Untitled',
+          updatedAt: row.updatedAt,
+        }));
+      },
+    );
   }
 
   /**
@@ -1206,36 +1400,54 @@ export class SearchRepo {
   private async searchMemories(query: string, limit: number): Promise<MemorySearchResult[]> {
     const bm25Query = sanitizeBm25Query(query);
 
-    const rows = await this.db
-      .select({
-        createdAt: userMemories.createdAt,
-        id: userMemories.id,
-        memoryLayer: userMemories.memoryLayer,
-        score: sql<number>`paradedb.score(${userMemories.id})`,
-        summary: userMemories.summary,
-        title: userMemories.title,
-        updatedAt: userMemories.updatedAt,
-      })
-      .from(userMemories)
-      .where(
-        and(
-          eq(userMemories.userId, this.userId),
-          sql`(${userMemories.title} @@@ ${bm25Query} OR ${userMemories.summary} @@@ ${bm25Query} OR ${userMemories.details} @@@ ${bm25Query})`,
-        ),
-      )
-      .orderBy(sql`paradedb.score(${userMemories.id}) DESC`)
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'memory',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            createdAt: userMemories.createdAt,
+            id: userMemories.id,
+            memoryLayer: userMemories.memoryLayer,
+            score: sql<number>`paradedb.score(${userMemories.id})`,
+            summary: userMemories.summary,
+            title: userMemories.title,
+            updatedAt: userMemories.updatedAt,
+          })
+          .from(userMemories)
+          .where(
+            and(
+              eq(userMemories.userId, this.userId),
+              sql`(${userMemories.title} @@@ ${bm25Query} OR ${userMemories.summary} @@@ ${bm25Query} OR ${userMemories.details} @@@ ${bm25Query})`,
+            ),
+          )
+          .orderBy(sql`paradedb.score(${userMemories.id}) DESC`)
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => ({
-      createdAt: row.createdAt,
-      description: this.truncate(row.summary),
-      id: row.id,
-      memoryLayer: row.memoryLayer,
-      relevance: row.relevance,
-      title: row.title || 'Untitled Memory',
-      type: 'memory' as const,
-      updatedAt: row.updatedAt,
-    }));
+    return measureSearchOperation(
+      {
+        entity: 'memory',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => ({
+          createdAt: row.createdAt,
+          description: this.truncate(row.summary),
+          id: row.id,
+          memoryLayer: row.memoryLayer,
+          relevance: row.relevance,
+          title: row.title || 'Untitled Memory',
+          type: 'memory' as const,
+          updatedAt: row.updatedAt,
+        })),
+    );
   }
 
   /**
@@ -1267,33 +1479,51 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('chat_group_hits');
 
-    const rows = await this.db
-      .select({
-        avatar: hits.avatar,
-        backgroundColor: hits.backgroundColor,
-        createdAt: hits.createdAt,
-        description: hits.description,
-        id: hits.id,
-        score: hits.score,
-        title: hits.title,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .where(this.liftedScopeWhere(hits.workspaceId))
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'chat_group',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            avatar: hits.avatar,
+            backgroundColor: hits.backgroundColor,
+            createdAt: hits.createdAt,
+            description: hits.description,
+            id: hits.id,
+            score: hits.score,
+            title: hits.title,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .where(this.liftedScopeWhere(hits.workspaceId))
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => ({
-      avatar: row.avatar,
-      backgroundColor: row.backgroundColor,
-      createdAt: row.createdAt,
-      description: row.description,
-      id: row.id,
-      relevance: row.relevance,
-      title: row.title || '',
-      type: 'chatGroup' as const,
-      updatedAt: row.updatedAt,
-    }));
+    return measureSearchOperation(
+      {
+        entity: 'chat_group',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => ({
+          avatar: row.avatar,
+          backgroundColor: row.backgroundColor,
+          createdAt: row.createdAt,
+          description: row.description,
+          id: row.id,
+          relevance: row.relevance,
+          title: row.title || '',
+          type: 'chatGroup' as const,
+          updatedAt: row.updatedAt,
+        })),
+    );
   }
 
   /**
@@ -1328,37 +1558,55 @@ export class SearchRepo {
       .limit(this.scanCandidateLimit(limit))
       .as('knowledge_base_hits');
 
-    const rows = await this.db
-      .select({
-        avatar: hits.avatar,
-        createdAt: hits.createdAt,
-        description: hits.description,
-        id: hits.id,
-        name: hits.name,
-        score: hits.score,
-        updatedAt: hits.updatedAt,
-      })
-      .from(hits)
-      .where(
-        and(
-          this.liftedScopeWhere(hits.workspaceId),
-          // Lifted above the BM25 scan (like the scope predicate) so the scan
-          // keeps its TopN shape; restricted rows only consume candidate slots.
-          excludeIds && excludeIds.length > 0 ? notInArray(hits.id, excludeIds) : undefined,
-        ),
-      )
-      .orderBy(desc(hits.score))
-      .limit(limit);
+    const rows = await measureSearchOperation(
+      {
+        entity: 'knowledge_base',
+        operation: 'unified',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () =>
+        this.db
+          .select({
+            avatar: hits.avatar,
+            createdAt: hits.createdAt,
+            description: hits.description,
+            id: hits.id,
+            name: hits.name,
+            score: hits.score,
+            updatedAt: hits.updatedAt,
+          })
+          .from(hits)
+          .where(
+            and(
+              this.liftedScopeWhere(hits.workspaceId),
+              // Lifted above the BM25 scan (like the scope predicate) so the scan
+              // keeps its TopN shape; restricted rows only consume candidate slots.
+              excludeIds && excludeIds.length > 0 ? notInArray(hits.id, excludeIds) : undefined,
+            ),
+          )
+          .orderBy(desc(hits.score))
+          .limit(limit),
+    );
 
-    return this.mapScoresToRelevance(rows).map((row) => ({
-      avatar: row.avatar,
-      createdAt: row.createdAt,
-      description: row.description,
-      id: row.id,
-      relevance: row.relevance,
-      title: row.name,
-      type: 'knowledgeBase' as const,
-      updatedAt: row.updatedAt,
-    }));
+    return measureSearchOperation(
+      {
+        entity: 'knowledge_base',
+        operation: 'unified',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () =>
+        this.mapScoresToRelevance(rows).map((row) => ({
+          avatar: row.avatar,
+          createdAt: row.createdAt,
+          description: row.description,
+          id: row.id,
+          relevance: row.relevance,
+          title: row.name,
+          type: 'knowledgeBase' as const,
+          updatedAt: row.updatedAt,
+        })),
+    );
   }
 }

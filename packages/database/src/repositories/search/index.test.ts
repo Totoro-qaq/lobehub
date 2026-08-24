@@ -1335,6 +1335,8 @@ describe.skipIf(!isServerDB)('SearchRepo', () => {
   // across the personal/workspace boundary, and enrichment lost with the joins.
   describe('search - workspace scoping', () => {
     const workspaceId = 'search-test-workspace';
+    let otherPrivateAgentId: string;
+    let otherPublicAgentId: string;
     let workspaceAgentId: string;
     let personalAgentId: string;
 
@@ -1351,15 +1353,50 @@ describe.skipIf(!isServerDB)('SearchRepo', () => {
         .values([
           { title: 'Kubernetes Personal Agent', userId, workspaceId: null },
           { title: 'Kubernetes Workspace Agent', userId, workspaceId },
+          {
+            title: 'Visibility Probe Private Agent',
+            userId: otherUserId,
+            visibility: 'private',
+            workspaceId,
+          },
+          {
+            title: 'Visibility Probe Public Agent',
+            userId: otherUserId,
+            visibility: 'public',
+            workspaceId,
+          },
         ])
-        .returning({ id: agents.id, workspaceId: agents.workspaceId });
+        .returning({
+          id: agents.id,
+          userId: agents.userId,
+          visibility: agents.visibility,
+          workspaceId: agents.workspaceId,
+        });
 
       personalAgentId = insertedAgents.find((a) => !a.workspaceId)!.id;
       workspaceAgentId = insertedAgents.find((a) => a.workspaceId)!.id;
+      otherPrivateAgentId = insertedAgents.find(
+        (agent) => agent.userId === otherUserId && agent.visibility === 'private',
+      )!.id;
+      otherPublicAgentId = insertedAgents.find(
+        (agent) => agent.userId === otherUserId && agent.visibility === 'public',
+      )!.id;
 
       await serverDB.insert(topics).values([
         { agentId: personalAgentId, title: 'Kubernetes personal topic', userId, workspaceId: null },
         { agentId: workspaceAgentId, title: 'Kubernetes workspace topic', userId, workspaceId },
+        {
+          agentId: otherPrivateAgentId,
+          title: 'Visibility Probe Private Topic',
+          userId: otherUserId,
+          workspaceId,
+        },
+        {
+          agentId: otherPublicAgentId,
+          title: 'Visibility Probe Public Topic',
+          userId: otherUserId,
+          workspaceId,
+        },
       ]);
 
       await serverDB.insert(messages).values([
@@ -1375,6 +1412,20 @@ describe.skipIf(!isServerDB)('SearchRepo', () => {
           content: 'Kubernetes workspace message',
           role: 'user',
           userId,
+          workspaceId,
+        },
+        {
+          agentId: otherPrivateAgentId,
+          content: 'Visibility Probe Private Message',
+          role: 'user',
+          userId: otherUserId,
+          workspaceId,
+        },
+        {
+          agentId: otherPublicAgentId,
+          content: 'Visibility Probe Public Message',
+          role: 'user',
+          userId: otherUserId,
           workspaceId,
         },
       ]);
@@ -1500,6 +1551,28 @@ describe.skipIf(!isServerDB)('SearchRepo', () => {
       for (const r of scoped) {
         if (r.type === 'topic' || r.type === 'message') expect(r.agentId).toBe(workspaceAgentId);
       }
+    });
+
+    it('inherits private agent visibility into unified topic and message search', async () => {
+      const results = await new SearchRepo(serverDB, userId, workspaceId).search({
+        query: 'Visibility Probe',
+      });
+      const resultIds = results.map(({ id, type }) => `${type}:${id}`);
+
+      expect(resultIds).toEqual(
+        expect.arrayContaining([
+          `agent:${otherPublicAgentId}`,
+          expect.stringMatching(/^topic:/u),
+          expect.stringMatching(/^message:/u),
+        ]),
+      );
+      expect(resultIds).not.toContain(`agent:${otherPrivateAgentId}`);
+      expect(results).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ agentId: otherPrivateAgentId, type: 'topic' }),
+          expect.objectContaining({ agentId: otherPrivateAgentId, type: 'message' }),
+        ]),
+      );
     });
 
     it('should keep joined agent metadata on topics and messages after the scan split', async () => {
@@ -1790,5 +1863,30 @@ describe.skipIf(!isServerDB)('SearchRepo', () => {
         expect(statement.params, `${alias}: agent-scoped scan pool`).toContain(20_000);
       }
     });
+  });
+});
+
+describe('SearchRepo parent-agent visibility SQL', () => {
+  it('requires topic and message parents to be visible in workspace mode', async () => {
+    const captured: string[] = [];
+    const client = {
+      query: async () => ({ rows: [] }),
+    } as unknown as NodePool;
+    const db = nodeDrizzle(client, {
+      logger: { logQuery: (query: string) => captured.push(query) },
+      schema,
+    });
+    const repo = new SearchRepo(db as unknown as LobeChatDatabase, userId, 'search-test-workspace');
+
+    await repo.search({ query: 'visibility', type: 'topic' });
+    await repo.search({ query: 'visibility', type: 'message' });
+
+    for (const alias of ['topic_hits', 'message_hits']) {
+      const statement = captured.find((query) => query.includes(`"${alias}"`));
+      expect(statement, `${alias}: query was not captured`).toBeDefined();
+      expect(statement).toContain(`"${alias}"."agent_id" is null`);
+      expect(statement).toContain('"agents"."id" is not null');
+      expect(statement).toContain('"agents"."visibility"');
+    }
   });
 });

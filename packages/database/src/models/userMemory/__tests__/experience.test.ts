@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { collectSearchMeasurements } from '@lobechat/observability-otel/modules/search';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { getTestDB } from '../../../core/getTestDB';
@@ -405,6 +406,15 @@ describe('UserMemoryExperienceModel', () => {
       expect(result.total).toBe(3);
     });
 
+    it('does not emit search telemetry without a query', async () => {
+      const { measurements, value } = await collectSearchMeasurements(() =>
+        experienceModel.queryList(),
+      );
+
+      expect(value.items).toHaveLength(3);
+      expect(measurements).toEqual([]);
+    });
+
     it('should return correct page and pageSize', async () => {
       const result = await experienceModel.queryList({ page: 1, pageSize: 2 });
 
@@ -436,10 +446,17 @@ describe('UserMemoryExperienceModel', () => {
     // BM25 search requires pg_search extension (ParadeDB), not available in PGlite
     const isServerDB = process.env.TEST_SERVER_DB === '1';
     it.skipIf(!isServerDB)('should search by query in title', async () => {
-      const result = await experienceModel.queryList({ q: 'Searchable Title' });
+      const { measurements, value: result } = await collectSearchMeasurements(() =>
+        experienceModel.queryList({ q: 'Searchable Title' }),
+      );
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('list-exp-3');
+      expect(measurements.map(({ phase }) => phase).sort()).toEqual([
+        'api',
+        'database',
+        'hydration',
+      ]);
     });
 
     it.skipIf(!isServerDB)('should search by query in situation', async () => {

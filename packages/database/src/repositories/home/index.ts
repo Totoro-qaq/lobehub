@@ -1,3 +1,4 @@
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import {
   type SidebarAgentItem,
   type SidebarAgentLabel,
@@ -463,116 +464,154 @@ export class HomeRepository {
    * Searches in title and description fields
    */
   async searchAgents(keyword: string): Promise<SidebarAgentItem[]> {
+    return measureSearchOperation(
+      {
+        entity: 'all',
+        operation: 'home',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.searchAgentsInternal(keyword),
+    );
+  }
+
+  private async searchAgentsInternal(keyword: string): Promise<SidebarAgentItem[]> {
     if (!keyword.trim()) return [];
 
     const bm25Query = sanitizeBm25Query(keyword);
 
     // Run agent and chat group searches in parallel
-    const [agentResults, chatGroupResults] = await Promise.all([
-      // 1. Search agents by title or description (BM25)
-      this.db
-        .select({
-          avatar: agents.avatar,
-          backgroundColor: agents.backgroundColor,
-          description: agents.description,
-          id: agents.id,
-          name: agents.name,
-          pinned: agents.pinned,
-          sessionId: sessions.id,
-          sessionPinned: sessions.pinned,
-          slug: agents.slug,
-          title: agents.title,
-          updatedAt: agents.updatedAt,
-          userId: agents.userId,
-          visibility: agents.visibility,
-        })
-        .from(agents)
-        .leftJoin(agentsToSessions, eq(agents.id, agentsToSessions.agentId))
-        .leftJoin(sessions, eq(agentsToSessions.sessionId, sessions.id))
-        .where(
-          and(
-            buildWorkspaceWhere(this.scope, agents),
-            not(eq(agents.virtual, true)),
-            sql`(${agents.title} @@@ ${bm25Query} OR ${agents.description} @@@ ${bm25Query})`,
-          ),
-        )
-        .orderBy(desc(agents.updatedAt)),
-      // 2. Search chat groups by title or description (BM25)
-      this.db
-        .select({
-          avatar: chatGroups.avatar,
-          backgroundColor: chatGroups.backgroundColor,
-          description: chatGroups.description,
-          id: chatGroups.id,
-          pinned: chatGroups.pinned,
-          title: chatGroups.title,
-          updatedAt: chatGroups.updatedAt,
-          userId: chatGroups.userId,
-          visibility: chatGroups.visibility,
-        })
-        .from(chatGroups)
-        .where(
-          and(
-            buildWorkspaceWhere(this.scope, chatGroups),
-            sql`(${chatGroups.title} @@@ ${bm25Query} OR ${chatGroups.description} @@@ ${bm25Query})`,
-          ),
-        )
-        .orderBy(desc(chatGroups.updatedAt)),
-    ]);
+    const { agentResults, chatGroupResults, memberAvatarsMap } = await measureSearchOperation(
+      {
+        entity: 'all',
+        getResultCount: ({ agentResults: agentRows, chatGroupResults: chatGroupRows }) =>
+          agentRows.length + chatGroupRows.length,
+        operation: 'home',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      async () => {
+        const [agentResults, chatGroupResults] = await Promise.all([
+          // 1. Search agents by title or description (BM25)
+          this.db
+            .select({
+              avatar: agents.avatar,
+              backgroundColor: agents.backgroundColor,
+              description: agents.description,
+              id: agents.id,
+              name: agents.name,
+              pinned: agents.pinned,
+              sessionId: sessions.id,
+              sessionPinned: sessions.pinned,
+              slug: agents.slug,
+              title: agents.title,
+              updatedAt: agents.updatedAt,
+              userId: agents.userId,
+              visibility: agents.visibility,
+            })
+            .from(agents)
+            .leftJoin(agentsToSessions, eq(agents.id, agentsToSessions.agentId))
+            .leftJoin(sessions, eq(agentsToSessions.sessionId, sessions.id))
+            .where(
+              and(
+                buildWorkspaceWhere(this.scope, agents),
+                not(eq(agents.virtual, true)),
+                sql`(${agents.title} @@@ ${bm25Query} OR ${agents.description} @@@ ${bm25Query})`,
+              ),
+            )
+            .orderBy(desc(agents.updatedAt)),
+          // 2. Search chat groups by title or description (BM25)
+          this.db
+            .select({
+              avatar: chatGroups.avatar,
+              backgroundColor: chatGroups.backgroundColor,
+              description: chatGroups.description,
+              id: chatGroups.id,
+              pinned: chatGroups.pinned,
+              title: chatGroups.title,
+              updatedAt: chatGroups.updatedAt,
+              userId: chatGroups.userId,
+              visibility: chatGroups.visibility,
+            })
+            .from(chatGroups)
+            .where(
+              and(
+                buildWorkspaceWhere(this.scope, chatGroups),
+                sql`(${chatGroups.title} @@@ ${bm25Query} OR ${chatGroups.description} @@@ ${bm25Query})`,
+              ),
+            )
+            .orderBy(desc(chatGroups.updatedAt)),
+        ]);
 
-    // 2.1 Query member avatars for matching chat groups
-    const memberAvatarsMap = await this.getChatGroupMemberAvatars(
-      chatGroupResults.map((g) => g.id),
+        // 2.1 Query member avatars for matching chat groups
+        const memberAvatarsMap = await this.getChatGroupMemberAvatars(
+          chatGroupResults.map((group) => group.id),
+        );
+
+        return { agentResults, chatGroupResults, memberAvatarsMap };
+      },
     );
 
-    // 3. Combine and format results
-    const results: SidebarAgentItem[] = [
-      ...agentResults.map((a) => {
-        const meta = normalizeInboxAgentMeta(
-          { avatar: a.avatar, title: a.title },
-          { slug: a.slug },
-        );
-        const visibility = this.normalizeVisibility(a.visibility);
+    return measureSearchOperation(
+      {
+        entity: 'all',
+        operation: 'home',
+        phase: 'hydration',
+        provider: 'pg_search',
+      },
+      () => {
+        // 3. Combine and format results
+        const results: SidebarAgentItem[] = [
+          ...agentResults.map((agent) => {
+            const meta = normalizeInboxAgentMeta(
+              { avatar: agent.avatar, title: agent.title },
+              { slug: agent.slug },
+            );
+            const visibility = this.normalizeVisibility(agent.visibility);
 
-        return cleanObject({
-          avatar: meta.avatar,
-          backgroundColor: a.backgroundColor,
-          description: a.description,
-          id: a.id,
-          name: a.name,
-          // Same personal-only reasoning as `groupId`: `sessions.pinned` is one
-          // member's legacy pin, and pins are shared again.
-          pinned: this.workspaceId ? (a.pinned ?? false) : (a.pinned ?? a.sessionPinned ?? false),
-          sessionId: a.sessionId,
-          title: meta.title,
-          type: 'agent' as const,
-          updatedAt: a.updatedAt,
-          userId: a.userId,
-          visibility,
-        });
-      }),
-      ...chatGroupResults.map((g) => {
-        const visibility = this.normalizeVisibility(g.visibility);
+            return cleanObject({
+              avatar: meta.avatar,
+              backgroundColor: agent.backgroundColor,
+              description: agent.description,
+              id: agent.id,
+              name: agent.name,
+              // Same personal-only reasoning as `groupId`: `sessions.pinned` is one
+              // member's legacy pin, and pins are shared again.
+              pinned: this.workspaceId
+                ? (agent.pinned ?? false)
+                : (agent.pinned ?? agent.sessionPinned ?? false),
+              sessionId: agent.sessionId,
+              title: meta.title,
+              type: 'agent' as const,
+              updatedAt: agent.updatedAt,
+              userId: agent.userId,
+              visibility,
+            });
+          }),
+          ...chatGroupResults.map((group) => {
+            const visibility = this.normalizeVisibility(group.visibility);
 
-        return cleanObject({
-          avatar: g.avatar || (memberAvatarsMap.get(g.id) ?? null),
-          backgroundColor: g.backgroundColor,
-          description: g.description,
-          id: g.id,
-          pinned: g.pinned ?? false,
-          title: g.title,
-          type: 'group' as const,
-          updatedAt: g.updatedAt,
-          userId: g.userId,
-          visibility,
-        });
-      }),
-    ] as SidebarAgentItem[];
+            return cleanObject({
+              avatar: group.avatar || (memberAvatarsMap.get(group.id) ?? null),
+              backgroundColor: group.backgroundColor,
+              description: group.description,
+              id: group.id,
+              pinned: group.pinned ?? false,
+              title: group.title,
+              type: 'group' as const,
+              updatedAt: group.updatedAt,
+              userId: group.userId,
+              visibility,
+            });
+          }),
+        ] as SidebarAgentItem[];
 
-    // Sort by updatedAt descending
-    results.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        // Sort by updatedAt descending
+        results.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
-    return results;
+        return results;
+      },
+    );
   }
 
   /**

@@ -1,3 +1,4 @@
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type { ActivityListParams, ActivityListResult } from '@lobechat/types';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm';
@@ -60,6 +61,23 @@ export class UserMemoryActivityModel {
   };
 
   queryList = async (params: ActivityListParams = {}): Promise<ActivityListResult> => {
+    if (!params.q?.trim()) return this.queryListInternal(params);
+
+    return measureSearchOperation(
+      {
+        entity: 'memory_activity',
+        getResultCount: (result) => result.items.length,
+        operation: 'memory_list',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.queryListInternal(params),
+    );
+  };
+
+  private queryListInternal = async (
+    params: ActivityListParams = {},
+  ): Promise<ActivityListResult> => {
     const { order = 'desc', page = 1, pageSize = 20, q, sort, status, tags, types } = params;
 
     const normalizedPage = Math.max(1, page);
@@ -69,6 +87,35 @@ export class UserMemoryActivityModel {
     const bm25MatchQuery = normalizedQuery
       ? normalizeBm25MatchQuery(normalizedQuery, SAFE_BM25_QUERY_OPTIONS)
       : '';
+    const measureDatabase = async <T>(operation: () => Promise<T>): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_activity',
+          operation: 'memory_list',
+          phase: 'database',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
+    const measureHydration = async <T extends ActivityListResult>(
+      operation: () => T,
+    ): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_activity',
+          getResultCount: (result) => result.items.length,
+          operation: 'memory_list',
+          phase: 'hydration',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
 
     const conditions: Array<SQL | undefined> = [
       this.memoryWhere(userMemoriesActivities),
@@ -108,42 +155,44 @@ export class UserMemoryActivityModel {
       this.memoryWhere(userMemories),
     );
 
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select({
-          capturedAt: userMemoriesActivities.capturedAt,
-          createdAt: userMemoriesActivities.createdAt,
-          endsAt: userMemoriesActivities.endsAt,
-          id: userMemoriesActivities.id,
-          narrative: userMemoriesActivities.narrative,
-          notes: userMemoriesActivities.notes,
-          startsAt: userMemoriesActivities.startsAt,
-          status: userMemoriesActivities.status,
-          tags: userMemoriesActivities.tags,
-          timezone: userMemoriesActivities.timezone,
-          title: userMemories.title,
-          type: userMemoriesActivities.type,
-          updatedAt: userMemoriesActivities.updatedAt,
-        })
-        .from(userMemoriesActivities)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause)
-        .orderBy(...orderByClauses)
-        .limit(normalizedPageSize)
-        .offset(offset),
-      this.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(userMemoriesActivities)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause),
-    ]);
+    const [rows, totalResult] = await measureDatabase(async () =>
+      Promise.all([
+        this.db
+          .select({
+            capturedAt: userMemoriesActivities.capturedAt,
+            createdAt: userMemoriesActivities.createdAt,
+            endsAt: userMemoriesActivities.endsAt,
+            id: userMemoriesActivities.id,
+            narrative: userMemoriesActivities.narrative,
+            notes: userMemoriesActivities.notes,
+            startsAt: userMemoriesActivities.startsAt,
+            status: userMemoriesActivities.status,
+            tags: userMemoriesActivities.tags,
+            timezone: userMemoriesActivities.timezone,
+            title: userMemories.title,
+            type: userMemoriesActivities.type,
+            updatedAt: userMemoriesActivities.updatedAt,
+          })
+          .from(userMemoriesActivities)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause)
+          .orderBy(...orderByClauses)
+          .limit(normalizedPageSize)
+          .offset(offset),
+        this.db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(userMemoriesActivities)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause),
+      ]),
+    );
 
-    return {
+    return measureHydration(() => ({
       items: rows,
       page: normalizedPage,
       pageSize: normalizedPageSize,
       total: Number(totalResult[0]?.count ?? 0),
-    };
+    }));
   };
 
   findById = async (id: string) => {

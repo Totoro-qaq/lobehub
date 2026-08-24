@@ -20,6 +20,7 @@
     "@lobechat/business-model-bank": "workspace:*",
     "@lobechat/const": "workspace:*",
     "@lobechat/conversation-flow": "workspace:*",
+    "@lobechat/observability-otel": "workspace:*",
     "@lobechat/types": "workspace:*",
     "@lobechat/utils": "workspace:*",
     "random-words": "^2.0.1",

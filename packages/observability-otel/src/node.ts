@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { env } from 'node:process';
 
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
@@ -10,7 +11,17 @@ import type { DetectedResourceAttributes } from '@opentelemetry/resources';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
+import {
+  ATTR_SERVICE_INSTANCE_ID,
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from '@opentelemetry/semantic-conventions';
+
+/**
+ * Keep cumulative metrics from separate serverless processes in distinct series.
+ * The identifier remains stable for this process lifetime and changes after a cold start.
+ */
+const serviceInstanceId = randomUUID();
 
 export function attributesForVercel(): DetectedResourceAttributes {
   return {
@@ -50,6 +61,7 @@ export function attributesForEnv(): DetectedResourceAttributes {
 
 export function attributesCommon(): DetectedResourceAttributes {
   return {
+    [ATTR_SERVICE_INSTANCE_ID]: serviceInstanceId,
     [ATTR_SERVICE_NAME]: 'lobehub',
     ...attributesForEnv(),
   };

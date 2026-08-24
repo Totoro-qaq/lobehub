@@ -1,3 +1,7 @@
+import {
+  measureSearchOperation,
+  type SearchEntity,
+} from '@lobechat/observability-otel/modules/search';
 import type {
   QueryTaxonomyOptionsParams,
   QueryTaxonomyOptionsResult,
@@ -70,11 +74,7 @@ export const buildBm25MatchCondition = (
 };
 
 export type SearchLayerKey =
-  | 'activities'
-  | 'contexts'
-  | 'experiences'
-  | 'identities'
-  | 'preferences';
+  'activities' | 'contexts' | 'experiences' | 'identities' | 'preferences';
 
 interface HybridLayerLimitRecord {
   activities?: number;
@@ -768,6 +768,31 @@ export class UserMemoryQueryModel {
     params: SearchMemoryParams,
     queryEmbeddings: number[][] = [],
   ): Promise<UserMemoryHybridSearchAggregatedResult> => {
+    if (normalizeSearchQueries(params.queries).length === 0) {
+      return this.searchMemoryInternal(params, queryEmbeddings);
+    }
+
+    return measureSearchOperation(
+      {
+        entity: 'memory',
+        getResultCount: (result) =>
+          result.activities.length +
+          result.contexts.length +
+          result.experiences.length +
+          result.identities.length +
+          result.preferences.length,
+        operation: 'memory_hybrid',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.searchMemoryInternal(params, queryEmbeddings),
+    );
+  };
+
+  private searchMemoryInternal = async (
+    params: SearchMemoryParams,
+    queryEmbeddings: number[][] = [],
+  ): Promise<UserMemoryHybridSearchAggregatedResult> => {
     const appliedQueries = normalizeSearchQueries(params.queries);
     const limits: HybridLayerLimitRecord = {
       activities: params.topK?.activities ?? DEFAULT_HYBRID_SEARCH_LIMIT,
@@ -861,29 +886,43 @@ export class UserMemoryQueryModel {
       return selected;
     };
 
-    return {
-      activities: finalizeLayer('activities', activities),
-      contexts: finalizeLayer('contexts', contexts),
-      experiences: finalizeLayer('experiences', experiences),
-      identities: finalizeLayer('identities', identities),
-      meta: {
-        appliedFilters: {
-          categories: params.categories,
-          labels: params.labels,
-          layers: params.layers,
-          queries: appliedQueries,
-          relationships: params.relationships,
-          status: params.status,
-          tags: params.tags,
-          timeRange: params.timeRange,
-          types: params.types,
-        },
-        appliedQueries,
-        layers: layerMeta,
-        ranking,
+    return measureSearchOperation(
+      {
+        entity: 'memory',
+        getResultCount: (result) =>
+          result.activities.length +
+          result.contexts.length +
+          result.experiences.length +
+          result.identities.length +
+          result.preferences.length,
+        operation: 'memory_hybrid',
+        phase: 'hydration',
+        provider: 'pg_search',
       },
-      preferences: finalizeLayer('preferences', preferences),
-    };
+      () => ({
+        activities: finalizeLayer('activities', activities),
+        contexts: finalizeLayer('contexts', contexts),
+        experiences: finalizeLayer('experiences', experiences),
+        identities: finalizeLayer('identities', identities),
+        meta: {
+          appliedFilters: {
+            categories: params.categories,
+            labels: params.labels,
+            layers: params.layers,
+            queries: appliedQueries,
+            relationships: params.relationships,
+            status: params.status,
+            tags: params.tags,
+            timeRange: params.timeRange,
+            types: params.types,
+          },
+          appliedQueries,
+          layers: layerMeta,
+          ranking,
+        },
+        preferences: finalizeLayer('preferences', preferences),
+      }),
+    );
   };
 
   /**
@@ -2148,7 +2187,11 @@ export class UserMemoryQueryModel {
       .orderBy(desc(userMemoriesActivities.capturedAt), desc(userMemoriesActivities.createdAt))
       .limit(limit);
 
-    return rowsQuery as Promise<UserMemoryActivitiesWithoutVectors[]>;
+    return this.measureLexicalSearch(
+      'memory_activity',
+      normalizedQuery,
+      async () => rowsQuery as Promise<UserMemoryActivitiesWithoutVectors[]>,
+    );
   }
 
   private async searchContextsLexical(
@@ -2252,7 +2295,11 @@ export class UserMemoryQueryModel {
       .orderBy(desc(contextCandidates.capturedAt), desc(contextCandidates.createdAt))
       .limit(limit);
 
-    return rowsQuery as Promise<UserMemoryContextsWithoutVectors[]>;
+    return this.measureLexicalSearch(
+      'memory_context',
+      normalizedQuery,
+      async () => rowsQuery as Promise<UserMemoryContextsWithoutVectors[]>,
+    );
   }
 
   private async searchExperiencesLexical(
@@ -2313,7 +2360,11 @@ export class UserMemoryQueryModel {
       .orderBy(desc(userMemoriesExperiences.capturedAt), desc(userMemoriesExperiences.createdAt))
       .limit(limit);
 
-    return rowsQuery as Promise<UserMemoryExperiencesWithoutVectors[]>;
+    return this.measureLexicalSearch(
+      'memory_experience',
+      normalizedQuery,
+      async () => rowsQuery as Promise<UserMemoryExperiencesWithoutVectors[]>,
+    );
   }
 
   private async searchPreferencesLexical(
@@ -2371,7 +2422,11 @@ export class UserMemoryQueryModel {
       .orderBy(desc(userMemoriesPreferences.capturedAt), desc(userMemoriesPreferences.createdAt))
       .limit(limit);
 
-    return rowsQuery as Promise<UserMemoryPreferencesWithoutVectors[]>;
+    return this.measureLexicalSearch(
+      'memory_preference',
+      normalizedQuery,
+      async () => rowsQuery as Promise<UserMemoryPreferencesWithoutVectors[]>,
+    );
   }
 
   private async searchIdentitiesLexical(
@@ -2431,6 +2486,28 @@ export class UserMemoryQueryModel {
       .orderBy(desc(userMemoriesIdentities.capturedAt), desc(userMemoriesIdentities.createdAt))
       .limit(limit);
 
-    return rowsQuery as Promise<UserMemoryIdentitiesWithoutVectors[]>;
+    return this.measureLexicalSearch(
+      'memory_identity',
+      normalizedQuery,
+      async () => rowsQuery as Promise<UserMemoryIdentitiesWithoutVectors[]>,
+    );
   }
+
+  private measureLexicalSearch = async <T>(
+    entity: SearchEntity,
+    normalizedQuery: string,
+    operation: () => Promise<T>,
+  ): Promise<T> => {
+    if (!normalizedQuery) return operation();
+
+    return measureSearchOperation(
+      {
+        entity,
+        operation: 'memory_hybrid',
+        phase: 'database',
+        provider: 'pg_search',
+      },
+      operation,
+    );
+  };
 }

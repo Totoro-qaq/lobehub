@@ -1,3 +1,4 @@
+import { measureSearchOperation } from '@lobechat/observability-otel/modules/search';
 import type { IdentityListParams, IdentityListResult } from '@lobechat/types';
 import { RelationshipEnum } from '@lobechat/types';
 import type { SQL } from 'drizzle-orm';
@@ -66,6 +67,23 @@ export class UserMemoryIdentityModel {
    * Returns a flat structure optimized for frontend display
    */
   queryList = async (params: IdentityListParams = {}): Promise<IdentityListResult> => {
+    if (!params.q?.trim()) return this.queryListInternal(params);
+
+    return measureSearchOperation(
+      {
+        entity: 'memory_identity',
+        getResultCount: (result) => result.items.length,
+        operation: 'memory_list',
+        phase: 'api',
+        provider: 'pg_search',
+      },
+      async () => this.queryListInternal(params),
+    );
+  };
+
+  private queryListInternal = async (
+    params: IdentityListParams = {},
+  ): Promise<IdentityListResult> => {
     const { order = 'desc', page = 1, pageSize = 20, q, relationships, sort, tags, types } = params;
 
     const normalizedPage = Math.max(1, page);
@@ -75,6 +93,35 @@ export class UserMemoryIdentityModel {
     const bm25MatchQuery = normalizedQuery
       ? normalizeBm25MatchQuery(normalizedQuery, SAFE_BM25_QUERY_OPTIONS)
       : '';
+    const measureDatabase = async <T>(operation: () => Promise<T>): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_identity',
+          operation: 'memory_list',
+          phase: 'database',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
+    const measureHydration = async <T extends IdentityListResult>(
+      operation: () => T,
+    ): Promise<T> => {
+      if (!normalizedQuery) return operation();
+
+      return measureSearchOperation(
+        {
+          entity: 'memory_identity',
+          getResultCount: (result) => result.items.length,
+          operation: 'memory_list',
+          phase: 'hydration',
+          provider: 'pg_search',
+        },
+        operation,
+      );
+    };
 
     // Build WHERE conditions
     const conditions: Array<SQL | undefined> = [
@@ -114,40 +161,42 @@ export class UserMemoryIdentityModel {
     );
 
     // Execute queries in parallel
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select({
-          capturedAt: userMemoriesIdentities.capturedAt,
-          createdAt: userMemoriesIdentities.createdAt,
-          description: userMemoriesIdentities.description,
-          episodicDate: userMemoriesIdentities.episodicDate,
-          id: userMemoriesIdentities.id,
-          relationship: userMemoriesIdentities.relationship,
-          role: userMemoriesIdentities.role,
-          tags: userMemoriesIdentities.tags,
-          title: userMemories.title,
-          type: userMemoriesIdentities.type,
-          updatedAt: userMemoriesIdentities.updatedAt,
-        })
-        .from(userMemoriesIdentities)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause)
-        .orderBy(...orderByClauses)
-        .limit(normalizedPageSize)
-        .offset(offset),
-      this.db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(userMemoriesIdentities)
-        .innerJoin(userMemories, joinCondition)
-        .where(whereClause),
-    ]);
+    const [rows, totalResult] = await measureDatabase(async () =>
+      Promise.all([
+        this.db
+          .select({
+            capturedAt: userMemoriesIdentities.capturedAt,
+            createdAt: userMemoriesIdentities.createdAt,
+            description: userMemoriesIdentities.description,
+            episodicDate: userMemoriesIdentities.episodicDate,
+            id: userMemoriesIdentities.id,
+            relationship: userMemoriesIdentities.relationship,
+            role: userMemoriesIdentities.role,
+            tags: userMemoriesIdentities.tags,
+            title: userMemories.title,
+            type: userMemoriesIdentities.type,
+            updatedAt: userMemoriesIdentities.updatedAt,
+          })
+          .from(userMemoriesIdentities)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause)
+          .orderBy(...orderByClauses)
+          .limit(normalizedPageSize)
+          .offset(offset),
+        this.db
+          .select({ count: sql<number>`COUNT(*)::int` })
+          .from(userMemoriesIdentities)
+          .innerJoin(userMemories, joinCondition)
+          .where(whereClause),
+      ]),
+    );
 
-    return {
+    return measureHydration(() => ({
       items: rows,
       page: normalizedPage,
       pageSize: normalizedPageSize,
       total: Number(totalResult[0]?.count ?? 0),
-    };
+    }));
   };
 
   findById = async (id: string) => {
