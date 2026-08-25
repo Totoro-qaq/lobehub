@@ -653,7 +653,7 @@ const AcceptancePage = memo<AcceptancePageProps>(
       try {
         const { queued } = await verifyService.predictReviews(acceptanceRecordId);
         if (queued === 0) {
-          toast.success({ title: t('acceptance.predict.nonePending') });
+          toast.info({ title: t('acceptance.predict.nonePending') });
           return;
         }
 
@@ -669,17 +669,23 @@ const AcceptancePage = memo<AcceptancePageProps>(
 
         if (awaiting > 0) {
           // Bounded batch overran the poll window — the rows land eventually.
-          toast.success({ title: t('acceptance.predict.stillRunning') });
+          toast.info({ title: t('acceptance.predict.stillRunning') });
           return;
         }
         const { judged, outcome, proposals } = summarizePredictRound(checks);
+        // Tone follows the outcome: a verdict either way is a success, but
+        // "could not judge" is a warning — a green tick on it would read as
+        // the review having passed, which is the ambiguity this toast exists
+        // to remove.
+        if (outcome === 'inconclusive') {
+          toast.warning({ title: t('acceptance.predict.inconclusive') });
+          return;
+        }
         toast.success({
           title:
             outcome === 'proposals'
               ? t('acceptance.predict.proposals', { count: proposals })
-              : outcome === 'allClear'
-                ? t('acceptance.predict.allClear', { count: judged })
-                : t('acceptance.predict.inconclusive'),
+              : t('acceptance.predict.allClear', { count: judged }),
         });
       } catch (error) {
         setActionError(error instanceof Error ? error.message : String(error));
