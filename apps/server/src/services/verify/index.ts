@@ -43,6 +43,7 @@ export {
 } from './repairService';
 export { type GenerateReportParams, VerifyReporterService } from './reporter';
 export {
+  isCurrentReviewPrediction,
   type PredictReviewParams,
   REVIEW_PREDICT_CONCURRENCY,
   shouldSurfaceProposal,
